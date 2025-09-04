@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { createClient } from '@/utils/supabase/server'
+import { createClient } from '../../../../src/utils/supabase/server'
 import { cookies } from 'next/headers'
 
 const openai = new OpenAI({
@@ -36,8 +36,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const cookieStore = cookies()
-    const supabase = createClient(cookieStore)
+    const supabase = await createClient()
     
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
@@ -71,11 +70,20 @@ export async function POST(req: NextRequest) {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('subscription_tier')
+      .select('subscription_tier, credits_used, credits_limit')
       .eq('id', user.id)
       .single()
 
     const tier = profile?.subscription_tier || 'free'
+    const currentUsage = profile?.credits_used || 0
+    const limit = profile?.credits_limit || 5
+    
+    if (limit !== -1 && currentUsage >= limit) {
+      return NextResponse.json(
+        { error: 'Monthly usage limit exceeded', limit, currentUsage },
+        { status: 429 }
+      )
+    }
     const limits = {
       free: 5,
       pro: 100,
@@ -100,9 +108,9 @@ export async function POST(req: NextRequest) {
       .map((msg: any) => `${msg.role.toUpperCase()}: ${msg.content}`)
       .join('\n\n')
 
-    // Generate the final prompt using GPT-4-turbo for higher quality
+    // Generate the final prompt using available model
     const response = await openai.chat.completions.create({
-      model: 'gpt-4-turbo',
+      model: 'gpt-4.1-mini',
       messages: [
         { role: 'system', content: PROMPT_GENERATOR_SYSTEM },
         { 

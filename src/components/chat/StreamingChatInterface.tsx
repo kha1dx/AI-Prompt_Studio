@@ -115,7 +115,7 @@ export default function StreamingChatInterface({
         if (done) break
 
         const chunk = new TextDecoder().decode(value)
-        const lines = chunk.split('\\n')
+        const lines = chunk.split('\n')
 
         for (const line of lines) {
           if (line.startsWith('data: ')) {

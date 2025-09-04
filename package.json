@@ -10,19 +10,26 @@
     "diagnostics": "node run-diagnostics.js",
     "test:auth": "node run-diagnostics.js",
     "test:connection": "cd tests/diagnostics && node 01-connection-health.js",
-    "test:environment": "cd tests/diagnostics && node 02-environment-validation.js"
+    "test:environment": "cd tests/diagnostics && node 02-environment-validation.js",
+    "debug:hive": "node run-hive-debug.js",
+    "debug:fix": "chmod +x execute-debug.sh && ./execute-debug.sh"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.7",
+    "@heroicons/react": "^2.2.0",
     "@supabase/auth-ui-react": "^0.4.7",
     "@supabase/auth-ui-shared": "^0.1.8",
     "@supabase/ssr": "^0.7.0",
     "@supabase/supabase-js": "^2.57.0",
     "@types/uuid": "^10.0.0",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.23.12",
     "lucide-react": "^0.542.0",
     "next": "15.5.2",
     "openai": "^5.19.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-hot-toast": "^2.6.0",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

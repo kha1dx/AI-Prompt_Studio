@@ -2,8 +2,9 @@
 
 import { useAuth } from '../../src/contexts/AuthContext'
 import { ProtectedRoute } from '../../src/components/auth/ProtectedRoute'
-import { ChatInterface } from '../../src/components/chat/ChatInterface'
+import { ChatWrapper } from '../../src/components/chat/ChatWrapper'
 import { MobileLayout } from '../../src/components/chat/MobileLayout'
+import { ErrorBoundary } from '../../src/components/common/ErrorBoundary'
 
 function DashboardContent() {
   const { user, signOut } = useAuth()
@@ -15,9 +16,11 @@ function DashboardContent() {
   return (
     <>
       {/* Mobile Layout */}
-      <MobileLayout>
-        <ChatInterface className="h-full" />
-      </MobileLayout>
+      <ErrorBoundary>
+        <MobileLayout>
+          <ChatWrapper className="h-full" />
+        </MobileLayout>
+      </ErrorBoundary>
 
       {/* Desktop Layout */}
       <div className="min-h-screen bg-gray-50 flex-col hidden md:flex">
@@ -109,7 +112,9 @@ function DashboardContent() {
 
         {/* Chat Interface */}
         <div className="flex-1 flex flex-col min-w-0">
-          <ChatInterface className="h-full" />
+          <ErrorBoundary>
+            <ChatWrapper className="h-full" />
+          </ErrorBoundary>
         </div>
       </main>
     </div>

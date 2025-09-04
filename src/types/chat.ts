@@ -27,9 +27,11 @@ export interface ChatContextType {
   isLoading: boolean
   error: string | null
   sendMessage: (content: string) => Promise<void>
+  generateFinalPrompt: () => Promise<void>
   clearChat: () => void
   exportChat: () => void
   copyMessage: (messageId: string) => Promise<void>
+  canGeneratePrompt: boolean
 }
 
 export interface ChatExportData {

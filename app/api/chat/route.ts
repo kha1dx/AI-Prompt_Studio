@@ -1,30 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '../../../src/utils/supabase/server'
-import { cookies } from 'next/headers'
+
+// Debug environment variables
+if (process.env.NODE_ENV === 'development') {
+  console.log('🔍 [API ENV CHECK]', {
+    hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+    hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    openAIKeyPrefix: process.env.OPENAI_API_KEY?.substring(0, 10) + '...',
+  })
+}
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })
 
-// System prompt for prompt engineering guidance
-const SYSTEM_PROMPT = `You are a prompt engineering expert helping users create better LLM prompts. Your job is to have a natural conversation to extract:
-1. The user's objective/goal
-2. Relevant context and background
-3. Specific constraints or requirements
-4. Desired output format
-5. Target audience
-6. Preferred tone/style
+// System prompt for prompt engineering guidance - aligned with PRD requirements
+const SYSTEM_PROMPT = `You are an expert Prompt Engineering Assistant at Prompt Studio. Your mission is to transform vague ideas into perfectly crafted LLM prompts through engaging, conversational guidance.
 
-Ask follow-up questions naturally and conversationally. Be concise but thorough. Once you have sufficient information, offer to generate a comprehensive, well-structured prompt that follows best practices:
+**Your Core Approach:**
+- Be warm, friendly, and encouraging 
+- Ask ONE focused question at a time (never multiple questions in one response)
+- Keep responses concise but engaging
+- Use a conversational, helpful tone
+- Guide users step-by-step through the process
+
+**Information to Extract (through conversation):**
+1. **Objective**: What they want to accomplish
+2. **Context**: Background information and situation
+3. **Constraints**: Specific requirements or limitations  
+4. **Output Format**: How they want the response structured
+5. **Audience**: Who the output is for
+6. **Tone & Style**: Preferred communication style
+
+**Conversation Flow:**
+1. Start by understanding their general goal
+2. Ask clarifying questions one at a time
+3. Build on their previous answers
+4. Once you have sufficient info (4-6 exchanges), offer to generate their optimized prompt
+5. When generating the final prompt, create a comprehensive, well-structured prompt following best practices
+
+**Final Prompt Format:**
+When ready to generate, create a detailed prompt in a code block with:
 - Clear objective statement
 - Relevant context and background
 - Specific instructions
-- Output format specification
+- Output format requirements
 - Examples if helpful
 - Clear constraints and guidelines
 
-When generating the final prompt, format it in a code block for easy copying.`
+Remember: Keep it conversational, friendly, and focused on one question at a time. You're helping them build something amazing!`
 
 export async function POST(req: NextRequest) {
   try {
@@ -38,47 +64,122 @@ export async function POST(req: NextRequest) {
     }
 
     if (!process.env.OPENAI_API_KEY) {
+      console.error('🚨 [CONFIG ERROR] OpenAI API key missing')
       return NextResponse.json(
         { error: 'OpenAI API key not configured' },
         { status: 500 }
       )
     }
 
-    // Authenticate user
-    const supabase = await createClient()
+    // Authenticate user with detailed error handling
+    let supabase
+    let user
     
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) {
+    try {
+      supabase = await createClient()
+      const { data: authData, error: authError } = await supabase.auth.getUser()
+      user = authData?.user
+      
+      if (authError) {
+        console.error('🚨 [AUTH ERROR]', authError)
+        return NextResponse.json(
+          { error: 'Authentication failed', details: authError.message },
+          { status: 401 }
+        )
+      }
+      
+      if (!user) {
+        console.log('🚨 [NO USER] No authenticated user found')
+        return NextResponse.json(
+          { error: 'No authenticated user found. Please login first.' },
+          { status: 401 }
+        )
+      }
+      
+      console.log('✅ [AUTH SUCCESS]', { userId: user.id, email: user.email })
+      
+    } catch (error) {
+      console.error('🚨 [SUPABASE ERROR]', error)
       return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
+        { error: 'Database connection failed', details: error.message },
+        { status: 500 }
       )
     }
 
-    // Check usage limits
-    const { data: usageData } = await supabase
-      .from('usage_limits')
-      .select('monthly_prompts_used, last_reset_date')
-      .eq('user_id', user.id)
-      .single()
+    // Check usage limits using correct database schema
+    let tier = 'free'
+    let currentUsage = 0
+    let limit = 5
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('subscription_tier')
-      .eq('id', user.id)
-      .single()
+    try {
+      // Get profile info
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('subscription_tier')
+        .eq('id', user.id)
+        .single()
 
-    const tier = profile?.subscription_tier || 'free'
-    const limits = {
-      free: 5,
-      pro: 100,
-      enterprise: -1 // unlimited
+      if (profile) {
+        tier = profile.subscription_tier || 'free'
+      }
+
+      // Get usage limits from proper table
+      const { data: usageLimits, error: usageError } = await supabase
+        .from('usage_limits')
+        .select('monthly_prompts_used')
+        .eq('user_id', user.id)
+        .single()
+
+      if (usageLimits) {
+        currentUsage = usageLimits.monthly_prompts_used || 0
+      }
+
+      // Set limits based on tier
+      limit = tier === 'pro' ? 100 : 5
+
+      console.log('📊 [USAGE CHECK]', { tier, currentUsage, limit })
+
+      // Handle missing profile/usage data
+      if (profileError || usageError) {
+        console.log('⚠️ [MISSING DATA] Creating missing user data:', {
+          profileError: profileError?.message,
+          usageError: usageError?.message
+        })
+
+        // Create profile if missing
+        if (profileError) {
+          await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              email: user.email,
+              subscription_tier: 'free'
+            })
+            .select()
+            .single()
+        }
+
+        // Create usage limits if missing
+        if (usageError) {
+          await supabase
+            .from('usage_limits')
+            .insert({
+              user_id: user.id,
+              monthly_prompts_used: 0
+            })
+            .select()
+            .single()
+        }
+      }
+
+    } catch (dbError) {
+      console.error('🚨 [DB QUERY ERROR]', dbError)
+      // Continue with defaults if DB query fails
+      console.log('⚠️ [FALLBACK] Using default limits due to DB error')
     }
-
-    const currentUsage = usageData?.monthly_prompts_used || 0
-    const limit = limits[tier as keyof typeof limits]
     
     if (limit !== -1 && currentUsage >= limit) {
+      console.log('🛑 [LIMIT EXCEEDED]', { currentUsage, limit })
       return NextResponse.json(
         { error: 'Monthly usage limit exceeded', limit, currentUsage },
         { status: 429 }
@@ -89,8 +190,10 @@ export async function POST(req: NextRequest) {
     const systemMessage = { role: 'system' as const, content: SYSTEM_PROMPT }
     const conversationMessages = [systemMessage, ...messages]
 
-    // Use GPT-4-mini as specified in PRD
-    const model = generateFinalPrompt ? 'gpt-4-turbo' : 'gpt-4o-mini'
+    // Use available model - updated based on API testing
+    const model = 'gpt-4.1-mini' // Use available model from OpenAI API
+    
+    console.log('🤖 [OPENAI REQUEST]', { model, messageCount: conversationMessages.length })
     
     const response = await openai.chat.completions.create({
       model,
@@ -119,41 +222,57 @@ export async function POST(req: NextRequest) {
             }
           }
           
-          // Save conversation to database if sessionId provided
+          // Save conversation to prompt_sessions table if sessionId provided
           if (sessionId) {
-            const { error: saveError } = await supabase
-              .from('prompt_sessions')
-              .upsert({
-                id: sessionId,
-                user_id: user.id,
-                conversation_history: [...messages, { role: 'assistant', content: fullResponse }],
-                updated_at: new Date().toISOString(),
-                ...(generateFinalPrompt && { 
-                  final_prompt: fullResponse,
-                  status: 'completed' 
+            const conversationHistory = [...messages, { role: 'assistant', content: fullResponse }]
+            
+            try {
+              const { error: saveError } = await supabase
+                .from('prompt_sessions')
+                .upsert({
+                  id: sessionId,
+                  user_id: user.id,
+                  conversation_history: conversationHistory,
+                  final_prompt: generateFinalPrompt ? fullResponse : null,
+                  status: generateFinalPrompt ? 'completed' : 'in_progress',
+                  title: messages[0]?.content?.substring(0, 50) + '...' || 'New Session',
+                  updated_at: new Date().toISOString()
                 })
-              })
-              
-            if (saveError) {
-              console.error('Error saving conversation:', saveError)
+                
+              if (saveError) {
+                console.error('🚨 [SAVE ERROR]', saveError)
+              } else {
+                console.log('✅ [SESSION SAVED]', sessionId)
+              }
+            } catch (saveError) {
+              console.error('🚨 [SAVE EXCEPTION]', saveError)
             }
           }
 
-          // Update usage count
+          // Update usage count in usage_limits table
           if (generateFinalPrompt) {
-            await supabase
-              .from('usage_limits')
-              .upsert({
-                user_id: user.id,
-                monthly_prompts_used: currentUsage + 1,
-                last_reset_date: new Date().toISOString().split('T')[0]
-              })
+            try {
+              const { error: updateError } = await supabase
+                .from('usage_limits')
+                .update({
+                  monthly_prompts_used: currentUsage + 1
+                })
+                .eq('user_id', user.id)
+                
+              if (updateError) {
+                console.error('🚨 [UPDATE ERROR]', updateError)
+              } else {
+                console.log('✅ [USAGE UPDATED]', { userId: user.id, newUsage: currentUsage + 1 })
+              }
+            } catch (updateError) {
+              console.error('🚨 [UPDATE EXCEPTION]', updateError)
+            }
           }
           
           controller.enqueue(`data: [DONE]\n\n`)
           controller.close()
         } catch (error) {
-          console.error('Streaming error:', error)
+          console.error('🚨 [STREAMING ERROR]', error)
           controller.error(error)
         }
       },
@@ -170,9 +289,18 @@ export async function POST(req: NextRequest) {
       },
     })
   } catch (error) {
-    console.error('Chat API error:', error)
+    console.error('🚨 [CHAT API ERROR]', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error', 
+        details: process.env.NODE_ENV === 'development' ? error.message : 'Please try again later',
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     )
   }
