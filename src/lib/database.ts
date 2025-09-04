@@ -1,513 +1,408 @@
-// Database utility functions and types for Prompt Studio
-import { createClient } from '../utils/supabase/server'
-import { createBrowserClient } from '../utils/supabase/client'
-import type { Database } from '../types/database'
+import { createBrowserClient } from '@supabase/ssr'
 
-// Type definitions for our enhanced database
-export type Conversation = Database['public']['Tables']['conversations']['Row']
-export type ConversationInsert = Database['public']['Tables']['conversations']['Insert']
-export type ConversationUpdate = Database['public']['Tables']['conversations']['Update']
+// Types for our database entities
+export interface Conversation {
+  id: string
+  user_id: string
+  title: string
+  preview?: string
+  created_at: string
+  updated_at: string
+  is_favorite: boolean
+  status: 'active' | 'archived'
+  message_count: number
+  has_prompt: boolean
+}
 
-export type ConversationMessage = Database['public']['Tables']['conversation_messages']['Row']
-export type ConversationMessageInsert = Database['public']['Tables']['conversation_messages']['Insert']
-
-export type Profile = Database['public']['Tables']['profiles']['Row']
-export type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
-
-export type UsageLimits = Database['public']['Tables']['usage_limits']['Row']
-export type PromptTemplate = Database['public']['Tables']['prompt_templates']['Row']
-
-// Enhanced message interface for real-time features
 export interface Message {
-    id: string
-    role: 'user' | 'assistant' | 'system'
-    content: string
-    timestamp: string
-    metadata?: {
-        tokens?: number
-        processingTime?: number
-        model?: string
-    }
+  id: string
+  conversation_id: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  metadata?: Record<string, any>
+  created_at: string
+  tokens_used?: number
 }
 
-// Conversation filters and pagination
-export interface ConversationFilters {
-    status?: 'active' | 'archived' | 'deleted'
-    search?: string
-    tags?: string[]
-    isFavorite?: boolean
-    dateRange?: {
-        start: string
-        end: string
-    }
+export interface Prompt {
+  id: string
+  conversation_id: string
+  user_id: string
+  content: string
+  title?: string
+  is_final: boolean
+  metadata?: Record<string, any>
+  created_at: string
+  updated_at: string
+  usage_count: number
+  rating?: number
+  tags: string[]
 }
 
-export interface PaginationOptions {
-    page?: number
-    limit?: number
-    sortBy?: 'created_at' | 'updated_at' | 'last_activity_at' | 'title'
-    sortOrder?: 'asc' | 'desc'
+export interface UserPreferences {
+  id: string
+  user_id: string
+  theme: 'light' | 'dark' | 'system'
+  language: string
+  notification_settings: Record<string, any>
+  prompt_generation_settings: Record<string, any>
+  created_at: string
+  updated_at: string
 }
 
-export interface PaginatedResult<T> {
-    data: T[]
-    count: number
-    page: number
-    totalPages: number
-    hasMore: boolean
-}
-
-// Database service class for centralized database operations
-export class DatabaseService {
-    private supabase: ReturnType<typeof createClient>
-
-    constructor(serverMode = true) {
-        this.supabase = serverMode ? createClient() : createBrowserClient()
-    }
-
-    // =====================================================================================
-    // CONVERSATION MANAGEMENT
-    // =====================================================================================
-
-    async getConversations(
-        userId: string,
-        filters: ConversationFilters = {},
-        pagination: PaginationOptions = {}
-    ): Promise<PaginatedResult<Conversation>> {
-        const {
-            page = 1,
-            limit = 20,
-            sortBy = 'last_activity_at',
-            sortOrder = 'desc'
-        } = pagination
-
-        const offset = (page - 1) * limit
-
-        let query = this.supabase
-            .from('conversations')
-            .select('*, conversation_messages(count)', { count: 'exact' })
-            .eq('user_id', userId)
-            .range(offset, offset + limit - 1)
-            .order(sortBy, { ascending: sortOrder === 'asc' })
-
-        // Apply filters
-        if (filters.status) {
-            query = query.eq('status', filters.status)
-        }
-
-        if (filters.search) {
-            query = query.or(`title.ilike.%${filters.search}%,messages::text.ilike.%${filters.search}%`)
-        }
-
-        if (filters.isFavorite !== undefined) {
-            query = query.eq('is_favorite', filters.isFavorite)
-        }
-
-        if (filters.tags && filters.tags.length > 0) {
-            query = query.overlaps('tags', filters.tags)
-        }
-
-        if (filters.dateRange) {
-            query = query
-                .gte('created_at', filters.dateRange.start)
-                .lte('created_at', filters.dateRange.end)
-        }
-
-        const { data, error, count } = await query
-
-        if (error) throw error
-
-        const totalPages = Math.ceil((count || 0) / limit)
-
-        return {
-            data: data || [],
-            count: count || 0,
-            page,
-            totalPages,
-            hasMore: page < totalPages
-        }
-    }
-
-    async getConversation(id: string, userId: string): Promise<Conversation | null> {
-        const { data, error } = await this.supabase
-            .from('conversations')
-            .select(`
-                *,
-                conversation_messages (
-                    id,
-                    role,
-                    content,
-                    message_index,
-                    token_count,
-                    processing_time_ms,
-                    metadata,
-                    created_at
-                )
-            `)
-            .eq('id', id)
-            .eq('user_id', userId)
-            .single()
-
-        if (error && error.code !== 'PGRST116') throw error
-        return data
-    }
-
-    async createConversation(
-        userId: string,
-        title: string,
-        initialMessage?: string
-    ): Promise<Conversation> {
-        const conversationData: ConversationInsert = {
-            user_id: userId,
-            title,
-            status: 'active',
-            messages: initialMessage ? [
-                {
-                    id: crypto.randomUUID(),
-                    role: 'user',
-                    content: initialMessage,
-                    timestamp: new Date().toISOString()
-                }
-            ] : [],
-            last_activity_at: new Date().toISOString()
-        }
-
-        const { data, error } = await this.supabase
-            .from('conversations')
-            .insert(conversationData)
-            .select()
-            .single()
-
-        if (error) throw error
-        return data
-    }
-
-    async updateConversation(
-        id: string,
-        userId: string,
-        updates: ConversationUpdate
-    ): Promise<Conversation> {
-        const { data, error } = await this.supabase
-            .from('conversations')
-            .update({
-                ...updates,
-                updated_at: new Date().toISOString(),
-                last_activity_at: new Date().toISOString()
-            })
-            .eq('id', id)
-            .eq('user_id', userId)
-            .select()
-            .single()
-
-        if (error) throw error
-        return data
-    }
-
-    async deleteConversation(id: string, userId: string): Promise<void> {
-        const { error } = await this.supabase
-            .from('conversations')
-            .update({ status: 'deleted' })
-            .eq('id', id)
-            .eq('user_id', userId)
-
-        if (error) throw error
-    }
-
-    async duplicateConversation(id: string, userId: string): Promise<Conversation> {
-        // Get original conversation
-        const original = await this.getConversation(id, userId)
-        if (!original) throw new Error('Conversation not found')
-
-        // Create duplicate
-        const duplicateData: ConversationInsert = {
-            user_id: userId,
-            title: `${original.title} (Copy)`,
-            messages: original.messages,
-            tags: original.tags,
-            status: 'active'
-        }
-
-        const { data, error } = await this.supabase
-            .from('conversations')
-            .insert(duplicateData)
-            .select()
-            .single()
-
-        if (error) throw error
-        return data
-    }
-
-    // =====================================================================================
-    // MESSAGE MANAGEMENT
-    // =====================================================================================
-
-    async addMessage(
-        conversationId: string,
-        message: Omit<ConversationMessageInsert, 'conversation_id' | 'message_index'>
-    ): Promise<ConversationMessage> {
-        // Get current message count for indexing
-        const { count } = await this.supabase
-            .from('conversation_messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('conversation_id', conversationId)
-
-        const messageData: ConversationMessageInsert = {
-            ...message,
-            conversation_id: conversationId,
-            message_index: (count || 0) + 1
-        }
-
-        const { data, error } = await this.supabase
-            .from('conversation_messages')
-            .insert(messageData)
-            .select()
-            .single()
-
-        if (error) throw error
-        return data
-    }
-
-    async getMessages(conversationId: string, userId: string): Promise<ConversationMessage[]> {
-        // Verify user owns the conversation
-        const conversation = await this.getConversation(conversationId, userId)
-        if (!conversation) throw new Error('Conversation not found')
-
-        const { data, error } = await this.supabase
-            .from('conversation_messages')
-            .select('*')
-            .eq('conversation_id', conversationId)
-            .order('message_index', { ascending: true })
-
-        if (error) throw error
-        return data || []
-    }
-
-    // =====================================================================================
-    // USER PROFILE & USAGE MANAGEMENT
-    // =====================================================================================
-
-    async getProfile(userId: string): Promise<Profile | null> {
-        const { data, error } = await this.supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single()
-
-        if (error && error.code !== 'PGRST116') throw error
-        return data
-    }
-
-    async updateProfile(userId: string, updates: ProfileUpdate): Promise<Profile> {
-        const { data, error } = await this.supabase
-            .from('profiles')
-            .update(updates)
-            .eq('id', userId)
-            .select()
-            .single()
-
-        if (error) throw error
-        return data
-    }
-
-    async getUsageLimits(userId: string): Promise<UsageLimits | null> {
-        const { data, error } = await this.supabase
-            .from('usage_limits')
-            .select('*')
-            .eq('user_id', userId)
-            .single()
-
-        if (error && error.code !== 'PGRST116') throw error
-        return data
-    }
-
-    async updateUsage(
-        userId: string,
-        updates: {
-            prompts?: number
-            conversations?: number
-            apiCalls?: number
-        }
-    ): Promise<UsageLimits> {
-        const current = await this.getUsageLimits(userId)
-        if (!current) throw new Error('Usage limits not found')
-
-        const updateData = {
-            monthly_prompts_used: current.monthly_prompts_used + (updates.prompts || 0),
-            monthly_conversations_created: current.monthly_conversations_created + (updates.conversations || 0),
-            monthly_api_calls: current.monthly_api_calls + (updates.apiCalls || 0)
-        }
-
-        const { data, error } = await this.supabase
-            .from('usage_limits')
-            .update(updateData)
-            .eq('user_id', userId)
-            .select()
-            .single()
-
-        if (error) throw error
-        return data
-    }
-
-    async getUserStats(userId: string): Promise<any> {
-        const { data, error } = await this.supabase
-            .rpc('get_user_stats', { user_id: userId })
-
-        if (error) throw error
-        return data
-    }
-
-    // =====================================================================================
-    // ANALYTICS & TRACKING
-    // =====================================================================================
-
-    async trackEvent(
-        userId: string,
-        eventType: string,
-        eventData: Record<string, any> = {},
-        sessionId?: string,
-        ipAddress?: string,
-        userAgent?: string
-    ): Promise<void> {
-        const { error } = await this.supabase
-            .from('user_analytics')
-            .insert({
-                user_id: userId,
-                event_type: eventType,
-                event_data: eventData,
-                session_id: sessionId,
-                ip_address: ipAddress,
-                user_agent: userAgent
-            })
-
-        if (error) {
-            console.error('Failed to track event:', error)
-            // Don't throw error for analytics failures
-        }
-    }
-
-    // =====================================================================================
-    // TEMPLATE MANAGEMENT
-    // =====================================================================================
-
-    async getTemplates(
-        userId?: string,
-        category?: string,
-        isPublic = true
-    ): Promise<PromptTemplate[]> {
-        let query = this.supabase
-            .from('prompt_templates')
-            .select('*')
-            .order('rating_average', { ascending: false })
-
-        if (isPublic) {
-            query = query.eq('is_public', true)
-        } else if (userId) {
-            query = query.eq('user_id', userId)
-        }
-
-        if (category) {
-            query = query.eq('category', category)
-        }
-
-        const { data, error } = await query
-
-        if (error) throw error
-        return data || []
-    }
-
-    async createTemplate(
-        userId: string,
-        template: Omit<PromptTemplate, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'usage_count' | 'rating_average' | 'rating_count'>
-    ): Promise<PromptTemplate> {
-        const { data, error } = await this.supabase
-            .from('prompt_templates')
-            .insert({
-                ...template,
-                user_id: userId
-            })
-            .select()
-            .single()
-
-        if (error) throw error
-        return data
-    }
-
-    // =====================================================================================
-    // SEARCH FUNCTIONALITY
-    // =====================================================================================
-
-    async searchConversations(
-        userId: string,
-        searchTerm: string,
-        limit = 10
-    ): Promise<Conversation[]> {
-        const { data, error } = await this.supabase
-            .from('conversations')
-            .select('*')
-            .eq('user_id', userId)
-            .or(`title.ilike.%${searchTerm}%,messages::text.ilike.%${searchTerm}%`)
-            .order('last_activity_at', { ascending: false })
-            .limit(limit)
-
-        if (error) throw error
-        return data || []
-    }
-
-    async searchMessages(
-        userId: string,
-        searchTerm: string,
-        conversationId?: string
-    ): Promise<ConversationMessage[]> {
-        let query = this.supabase
-            .from('conversation_messages')
-            .select(`
-                *,
-                conversations!inner (
-                    id,
-                    title,
-                    user_id
-                )
-            `)
-            .eq('conversations.user_id', userId)
-            .ilike('content', `%${searchTerm}%`)
-            .order('created_at', { ascending: false })
-
-        if (conversationId) {
-            query = query.eq('conversation_id', conversationId)
-        }
-
-        const { data, error } = await query
-
-        if (error) throw error
-        return data || []
-    }
-}
-
-// Utility functions for common operations
-export const getSubscriptionLimits = (tier: string) => {
-    const limits = {
-        free: { prompts: 5, conversations: 10, apiCalls: 50 },
-        pro: { prompts: 100, conversations: 500, apiCalls: 2000 },
-        enterprise: { prompts: -1, conversations: -1, apiCalls: -1 } // Unlimited
-    }
-    return limits[tier as keyof typeof limits] || limits.free
-}
-
-export const canUserPerformAction = (
-    usage: UsageLimits,
-    tier: string,
-    action: 'prompt' | 'conversation' | 'api_call'
-): boolean => {
-    const limits = getSubscriptionLimits(tier)
+// Get Supabase client for client-side operations
+const getSupabaseClient = () => createBrowserClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+// Conversation operations
+export const conversationService = {
+  // Get all conversations for a user
+  async getAll(userId: string, status: 'active' | 'archived' = 'active') {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('status', status)
+      .order('updated_at', { ascending: false })
+
+    if (error) throw error
+    return data as Conversation[]
+  },
+
+  // Get a single conversation
+  async getById(id: string, userId: string) {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single()
+
+    if (error) throw error
+    return data as Conversation
+  },
+
+  // Create a new conversation
+  async create(userId: string, title: string = 'New Conversation') {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase
+      .from('conversations')
+      .insert({
+        user_id: userId,
+        title,
+        preview: '',
+        status: 'active'
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as Conversation
+  },
+
+  // Update conversation
+  async update(id: string, userId: string, updates: Partial<Conversation>) {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase
+      .from('conversations')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as Conversation
+  },
+
+  // Delete conversation
+  async delete(id: string, userId: string) {
+    const supabase = getSupabaseClient()
+    const { error } = await supabase
+      .from('conversations')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) throw error
+  },
+
+  // Toggle favorite status
+  async toggleFavorite(id: string, userId: string) {
+    // First get current status
+    const conversation = await this.getById(id, userId)
     
-    switch (action) {
-        case 'prompt':
-            return limits.prompts === -1 || usage.monthly_prompts_used < limits.prompts
-        case 'conversation':
-            return limits.conversations === -1 || usage.monthly_conversations_created < limits.conversations
-        case 'api_call':
-            return limits.apiCalls === -1 || usage.monthly_api_calls < limits.apiCalls
-        default:
-            return false
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase
+      .from('conversations')
+      .update({ is_favorite: !conversation.is_favorite })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as Conversation
+  },
+
+  // Search conversations
+  async search(userId: string, query: string, filters: { 
+    is_favorite?: boolean, 
+    has_prompt?: boolean,
+    status?: 'active' | 'archived'
+  } = {}) {
+    const supabase = getSupabaseClient()
+    let queryBuilder = supabase
+      .from('conversations')
+      .select('*')
+      .eq('user_id', userId)
+
+    // Add filters
+    if (filters.is_favorite !== undefined) {
+      queryBuilder = queryBuilder.eq('is_favorite', filters.is_favorite)
     }
+    if (filters.has_prompt !== undefined) {
+      queryBuilder = queryBuilder.eq('has_prompt', filters.has_prompt)
+    }
+    if (filters.status) {
+      queryBuilder = queryBuilder.eq('status', filters.status)
+    }
+
+    // Add text search
+    if (query) {
+      queryBuilder = queryBuilder.or(`title.ilike.%${query}%,preview.ilike.%${query}%`)
+    }
+
+    const { data, error } = await queryBuilder
+      .order('updated_at', { ascending: false })
+
+    if (error) throw error
+    return data as Conversation[]
+  }
+}
+
+// Message operations
+export const messageService = {
+  // Get all messages for a conversation
+  async getByConversation(conversationId: string) {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase
+      .from('messages')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: true })
+
+    if (error) throw error
+    return data as Message[]
+  },
+
+  // Add a message to conversation
+  async create(conversationId: string, role: Message['role'], content: string, metadata: Record<string, any> = {}) {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        role,
+        content,
+        metadata
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as Message
+  },
+
+  // Delete all messages in a conversation
+  async deleteByConversation(conversationId: string) {
+    const supabase = getSupabaseClient()
+    const { error } = await supabase
+      .from('messages')
+      .delete()
+      .eq('conversation_id', conversationId)
+
+    if (error) throw error
+  }
+}
+
+// Prompt operations
+export const promptService = {
+  // Get prompts by conversation
+  async getByConversation(conversationId: string) {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase
+      .from('prompts')
+      .select('*')
+      .eq('conversation_id', conversationId)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data as Prompt[]
+  },
+
+  // Get all prompts for a user
+  async getByUser(userId: string, finalOnly: boolean = false) {
+    const supabase = getSupabaseClient()
+    let query = supabase
+      .from('prompts')
+      .select('*')
+      .eq('user_id', userId)
+
+    if (finalOnly) {
+      query = query.eq('is_final', true)
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data as Prompt[]
+  },
+
+  // Create a new prompt
+  async create(conversationId: string, userId: string, content: string, isFinal: boolean = false, title?: string) {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase
+      .from('prompts')
+      .insert({
+        conversation_id: conversationId,
+        user_id: userId,
+        content,
+        title,
+        is_final: isFinal
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as Prompt
+  },
+
+  // Update prompt
+  async update(id: string, userId: string, updates: Partial<Prompt>) {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase
+      .from('prompts')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as Prompt
+  },
+
+  // Delete prompt
+  async delete(id: string, userId: string) {
+    const supabase = getSupabaseClient()
+    const { error } = await supabase
+      .from('prompts')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', userId)
+
+    if (error) throw error
+  },
+
+  // Increment usage count
+  async incrementUsage(id: string, userId: string) {
+    // First get current usage count
+    const supabase = getSupabaseClient()
+    const { data: currentPrompt } = await supabase
+      .from('prompts')
+      .select('usage_count')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single()
+
+    const { data, error } = await supabase
+      .from('prompts')
+      .update({ 
+        usage_count: (currentPrompt?.usage_count || 0) + 1,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('user_id', userId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as Prompt
+  }
+}
+
+// User preferences operations
+export const userPreferencesService = {
+  // Get user preferences
+  async get(userId: string) {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+
+    if (error && error.code !== 'PGRST116') { // Not found is ok
+      throw error
+    }
+    
+    return data as UserPreferences | null
+  },
+
+  // Create or update user preferences
+  async upsert(userId: string, preferences: Partial<UserPreferences>) {
+    const supabase = getSupabaseClient()
+    const { data, error } = await supabase
+      .from('user_preferences')
+      .upsert({
+        user_id: userId,
+        ...preferences
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data as UserPreferences
+  }
+}
+
+// Usage tracking
+export const usageTrackingService = {
+  // Track user action
+  async track(userId: string, action: string, resourceType: string, resourceId?: string, metadata: Record<string, any> = {}) {
+    const supabase = getSupabaseClient()
+    const { error } = await supabase
+      .from('usage_tracking')
+      .insert({
+        user_id: userId,
+        action,
+        resource_type: resourceType,
+        resource_id: resourceId,
+        metadata
+      })
+
+    if (error) throw error
+  },
+
+  // Get usage stats
+  async getStats(userId: string, days: number = 30) {
+    const supabase = getSupabaseClient()
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
+
+    const { data, error } = await supabase
+      .from('usage_tracking')
+      .select('action, resource_type, created_at')
+      .eq('user_id', userId)
+      .gte('created_at', startDate.toISOString())
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+    return data
+  }
 }
