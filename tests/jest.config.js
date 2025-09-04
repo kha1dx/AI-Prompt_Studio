@@ -12,6 +12,9 @@ const customJestConfig = {
   testMatch: [
     '<rootDir>/tests/unit/**/*.test.{js,jsx,ts,tsx}',
     '<rootDir>/tests/integration/**/*.test.{js,jsx,ts,tsx}',
+    '<rootDir>/tests/comprehensive/**/*.test.{js,jsx,ts,tsx}',
+    '<rootDir>/tests/security/**/*.test.{js,jsx,ts,tsx}',
+    '<rootDir>/tests/performance/**/*.test.{js,jsx,ts,tsx}',
   ],
   moduleNameMapping: {
     '^@/(.*)$': '<rootDir>/src/$1',

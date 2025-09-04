@@ -407,3 +407,121 @@
   transform: translateY(-20px);
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
+
+/* Micro-interactions for Delightful UX */
+.micro-bounce {
+  animation: microBounce 0.3s ease-out;
+}
+
+.micro-wiggle {
+  animation: microWiggle 0.6s ease-in-out;
+}
+
+.micro-pulse {
+  animation: microPulse 0.4s ease-out;
+}
+
+.micro-shake {
+  animation: microShake 0.5s ease-out;
+}
+
+@keyframes microBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+@keyframes microWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(2deg); }
+  75% { transform: rotate(-2deg); }
+}
+
+@keyframes microPulse {
+  0% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+  }
+}
+
+@keyframes microShake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-2px); }
+  20%, 40%, 60%, 80% { transform: translateX(2px); }
+}
+
+/* Advanced Particle Effects */
+.particle-trail {
+  position: relative;
+}
+
+.particle-trail::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  background: var(--gradient-aurora);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  animation: particleTrail 0.8s ease-out;
+}
+
+@keyframes particleTrail {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(3) rotate(180deg);
+  }
+}
+
+/* Enhanced Loading Effects */
+.loading-pulse-ring {
+  position: relative;
+}
+
+.loading-pulse-ring::before,
+.loading-pulse-ring::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  border: 2px solid rgba(139, 92, 246, 0.4);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: pulseRing 2s ease-out infinite;
+}
+
+.loading-pulse-ring::after {
+  animation-delay: 1s;
+}
+
+@keyframes pulseRing {
+  0% {
+    transform: translate(-50%, -50%) scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2);
+    opacity: 0;
+  }
+}

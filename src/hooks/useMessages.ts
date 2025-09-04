@@ -37,11 +37,18 @@ export function useMessages(conversationId?: string) {
       const data = await promptService.getByConversation(targetId)
       setPrompts(data)
       return data
-    } catch (err) {
-      console.error('Error loading prompts:', err)
+    } catch (err: any) {
+      console.error('Error loading prompts:', {
+        error: err,
+        message: err?.message,
+        conversationId: targetId,
+        userId: user?.id
+      })
+      // Set empty array on error instead of failing
+      setPrompts([])
       return []
     }
-  }, [conversationId])
+  }, [conversationId, user?.id])
 
   // Add a message
   const addMessage = useCallback(async (

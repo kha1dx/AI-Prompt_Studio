@@ -25,16 +25,16 @@ export function MessageBubble({ message, onCopy }: MessageBubbleProps) {
     <div
       className={`flex w-full mb-6 ${
         isUser ? 'justify-end' : 'justify-start'
-      } animate-in slide-in-from-bottom-2 duration-200`}
+      } animate-fade-in-up`}
     >
       <div className={`flex max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
         {/* Avatar */}
         <div className={`flex-shrink-0 ${isUser ? 'ml-3' : 'mr-3'}`}>
           <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shadow-lg ${
               isUser
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
+                : 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white'
             }`}
           >
             {isUser ? (
@@ -52,14 +52,14 @@ export function MessageBubble({ message, onCopy }: MessageBubbleProps) {
         {/* Message Content */}
         <div className={`group relative ${isUser ? 'text-right' : 'text-left'}`}>
           <div
-            className={`inline-block p-4 rounded-2xl shadow-sm ${
+            className={`inline-block p-4 rounded-2xl shadow-lg backdrop-blur-sm border ${
               isUser
-                ? 'bg-blue-600 text-white'
-                : 'bg-white text-gray-900 border border-gray-200 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-700'
+                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white border-purple-500/30'
+                : 'bg-slate-800/80 text-gray-100 border-slate-600/50'
             } ${
               message.isStreaming
                 ? 'animate-pulse'
-                : ''
+                : 'hover:shadow-xl transition-shadow duration-300'
             }`}
           >
             <div className="whitespace-pre-wrap break-words text-sm leading-relaxed">
@@ -76,18 +76,18 @@ export function MessageBubble({ message, onCopy }: MessageBubbleProps) {
               isUser ? 'justify-end' : 'justify-start'
             }`}
           >
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-gray-400">
               {formatTimestamp(message.timestamp)}
             </span>
             <div className="relative">
               <button
                 onClick={handleCopy}
-                className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                className="p-1 rounded hover:bg-slate-700/50 transition-colors duration-200"
                 title="Copy message"
                 aria-label="Copy message"
               >
                 <svg
-                  className="w-3 h-3 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  className="w-3 h-3 text-gray-400 hover:text-white"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -101,9 +101,9 @@ export function MessageBubble({ message, onCopy }: MessageBubbleProps) {
                 </svg>
               </button>
               {showCopyTooltip && (
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg whitespace-nowrap">
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-slate-900/90 backdrop-blur-sm rounded shadow-xl whitespace-nowrap border border-slate-700">
                   Copied!
-                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-gray-900"></div>
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-transparent border-t-slate-900"></div>
                 </div>
               )}
             </div>

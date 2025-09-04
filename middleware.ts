@@ -42,17 +42,48 @@ export async function middleware(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+  try {
+    // Add timeout and error handling for auth checks
+    const authPromise = supabase.auth.getUser()
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Auth check timeout')), 5000)
+    )
+    
+    const { data, error } = await Promise.race([authPromise, timeoutPromise]) as any
+    
+    if (error) {
+      console.warn('⚠️ [MIDDLEWARE] Auth error:', error.message)
+    } else {
+      user = data?.user || null
+      
+      // Validate token freshness
+      if (user) {
+        const session = data?.session
+        if (session?.expires_at) {
+          const expiresAt = session.expires_at
+          const now = Math.floor(Date.now() / 1000)
+          
+          if (expiresAt < now) {
+            console.warn('⚠️ [MIDDLEWARE] Token expired, treating as no user')
+            user = null
+          }
+        }
+      }
+    }
+  } catch (error: any) {
+    console.error('❌ [MIDDLEWARE] Auth check failed:', error.message)
+    user = null // Treat auth failures as unauthenticated
+  }
 
-  // Add logging for debugging auth flow
+  // Enhanced logging for debugging auth flow
   if (process.env.NODE_ENV === 'development') {
     console.log('🔍 [MIDDLEWARE]', {
       path: request.nextUrl.pathname,
       hasUser: !!user,
-      userId: user?.id?.substring(0, 8) + '...',
-      userEmail: user?.email?.replace(/^(.{3}).*(@.+)$/, '$1***$2')
+      userId: user?.id ? user.id.substring(0, 8) + '...' : 'undefined...',
+      userEmail: user?.email?.replace(/^(.{3}).*(@.+)$/, '$1***$2') || undefined,
+      timestamp: new Date().toISOString()
     })
   }
 

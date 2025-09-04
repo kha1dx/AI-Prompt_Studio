@@ -54,7 +54,7 @@ Remember: Keep it conversational, friendly, and focused on one question at a tim
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages, sessionId, generateFinalPrompt = false } = await req.json()
+    const { messages, conversationId, sessionId, generateFinalPrompt = false } = await req.json()
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
@@ -222,30 +222,26 @@ export async function POST(req: NextRequest) {
             }
           }
           
-          // Save conversation to prompt_sessions table if sessionId provided
-          if (sessionId) {
-            const conversationHistory = [...messages, { role: 'assistant', content: fullResponse }]
-            
+          // Save conversation if conversationId provided          
+          if (conversationId && fullResponse.trim()) {
             try {
-              const { error: saveError } = await supabase
-                .from('prompt_sessions')
-                .upsert({
-                  id: sessionId,
-                  user_id: user.id,
-                  conversation_history: conversationHistory,
-                  final_prompt: generateFinalPrompt ? fullResponse : null,
-                  status: generateFinalPrompt ? 'completed' : 'in_progress',
-                  title: messages[0]?.content?.substring(0, 50) + '...' || 'New Session',
+              // Update conversation with the assistant's response and activity
+              const { error: updateError } = await supabase
+                .from('conversations')
+                .update({
+                  last_activity_at: new Date().toISOString(),
                   updated_at: new Date().toISOString()
                 })
+                .eq('id', conversationId)
+                .eq('user_id', user.id)
                 
-              if (saveError) {
-                console.error('🚨 [SAVE ERROR]', saveError)
+              if (updateError) {
+                console.error('🚨 [CONVERSATION UPDATE ERROR]', updateError)
               } else {
-                console.log('✅ [SESSION SAVED]', sessionId)
+                console.log('✅ [CONVERSATION UPDATED]', conversationId)
               }
-            } catch (saveError) {
-              console.error('🚨 [SAVE EXCEPTION]', saveError)
+            } catch (updateError) {
+              console.error('🚨 [CONVERSATION UPDATE EXCEPTION]', updateError)
             }
           }
 

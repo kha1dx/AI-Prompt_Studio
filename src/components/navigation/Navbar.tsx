@@ -28,33 +28,33 @@ export default function Navbar({ variant = 'default', showUserMenu = false }: Na
 
   if (variant === 'app') {
     return (
-      <nav className="bg-white border-b border-gray-200 px-4 py-3">
+      <nav className="bg-slate-900/80 backdrop-blur-sm border-b border-slate-700/50 px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/dashboard" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-blue-400 rounded-lg flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">Prompt Studio</span>
+            <span className="text-xl font-bold text-white">Prompt Studio</span>
           </Link>
 
           {/* Navigation Links - Desktop */}
           <div className="hidden md:flex items-center space-x-8">
             <Link 
               href="/dashboard" 
-              className="nav-link"
+              className="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/10"
             >
               Dashboard
             </Link>
             <Link 
               href="/chat" 
-              className="nav-link"
+              className="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/10"
             >
               Chat
             </Link>
             <Link 
               href="/history" 
-              className="nav-link"
+              className="text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/10 flex items-center"
             >
               <History className="w-4 h-4 mr-2" />
               History
@@ -66,27 +66,27 @@ export default function Navbar({ variant = 'default', showUserMenu = false }: Na
             <div className="relative">
               <button
                 onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-white/10 transition-colors"
               >
                 <div className="w-8 h-8 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full flex items-center justify-center">
                   <User className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-sm font-medium text-gray-700 hidden md:block">
+                <span className="text-sm font-medium text-gray-300 hidden md:block">
                   {user.email?.split('@')[0]}
                 </span>
               </button>
 
               {/* User Dropdown */}
               {isUserMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                  <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900">{user.email}</p>
-                    <p className="text-xs text-gray-500">Free Plan</p>
+                <div className="absolute right-0 mt-2 w-48 bg-slate-800 rounded-lg shadow-xl border border-slate-700 py-1 z-50">
+                  <div className="px-4 py-2 border-b border-slate-700">
+                    <p className="text-sm font-medium text-white">{user.email}</p>
+                    <p className="text-xs text-gray-400">Free Plan</p>
                   </div>
                   
                   <Link
                     href="/settings"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    className="flex items-center px-4 py-2 text-sm text-gray-300 hover:bg-slate-700"
                   >
                     <Settings className="w-4 h-4 mr-3" />
                     Settings
@@ -94,7 +94,7 @@ export default function Navbar({ variant = 'default', showUserMenu = false }: Na
                   
                   <button
                     onClick={handleSignOut}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-300 hover:bg-slate-700"
                   >
                     <LogOut className="w-4 h-4 mr-3" />
                     Sign Out
@@ -106,48 +106,48 @@ export default function Navbar({ variant = 'default', showUserMenu = false }: Na
 
           {/* Mobile Menu Button */}
           <button
-            className="md:hidden p-2 rounded-lg hover:bg-gray-100"
+            className="md:hidden p-2 rounded-lg hover:bg-white/10"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? (
-              <X className="w-5 h-5 text-gray-600" />
+              <X className="w-5 h-5 text-gray-300" />
             ) : (
-              <Menu className="w-5 h-5 text-gray-600" />
+              <Menu className="w-5 h-5 text-gray-300" />
             )}
           </button>
         </div>
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 border-t border-gray-200">
+          <div className="md:hidden mt-4 pb-4 border-t border-slate-700">
             <div className="space-y-2 pt-4">
               <Link 
                 href="/dashboard" 
-                className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100"
+                className="block px-3 py-2 rounded-lg text-gray-300 hover:bg-white/10"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Dashboard
               </Link>
               <Link 
                 href="/chat" 
-                className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100"
+                className="block px-3 py-2 rounded-lg text-gray-300 hover:bg-white/10"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Chat
               </Link>
               <Link 
                 href="/history" 
-                className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100"
+                className="block px-3 py-2 rounded-lg text-gray-300 hover:bg-white/10"
                 onClick={() => setIsMenuOpen(false)}
               >
                 History
               </Link>
               
               {user && (
-                <div className="border-t border-gray-200 pt-4 mt-4">
+                <div className="border-t border-slate-700 pt-4 mt-4">
                   <Link 
                     href="/settings" 
-                    className="block px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100"
+                    className="block px-3 py-2 rounded-lg text-gray-300 hover:bg-white/10"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     Settings
@@ -157,7 +157,7 @@ export default function Navbar({ variant = 'default', showUserMenu = false }: Na
                       handleSignOut()
                       setIsMenuOpen(false)
                     }}
-                    className="block w-full text-left px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-100"
+                    className="block w-full text-left px-3 py-2 rounded-lg text-gray-300 hover:bg-white/10"
                   >
                     Sign Out
                   </button>

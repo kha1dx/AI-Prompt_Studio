@@ -4,30 +4,33 @@ import { useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Navbar from '../../src/components/navigation/Navbar'
 import ConversationSidebar from '../../src/components/chat/ConversationSidebar'
-import { ChatInterface } from '../../src/components/chat/ChatInterface'
-import PromptSidebar from '../../src/components/chat/PromptSidebar'
-import { ChatProvider, useChat } from '../../src/contexts/ChatContext'
+import ConversationChatInterface from '../../src/components/chat/ConversationChatInterface'
+import EnhancedPromptSidebar from '../../src/components/chat/EnhancedPromptSidebar'
+import { useAuth } from '../../src/contexts/AuthContext'
+import { ErrorBoundary } from '../../src/components/ErrorBoundary'
 
 function ChatPageContent() {
+  const { user, loading } = useAuth()
   const router = useRouter()
-  const { generateFinalPrompt, canGeneratePrompt, isLoading, messages } = useChat()
   const [currentConversationId, setCurrentConversationId] = useState<string | undefined>(undefined)
   const [generatedPrompt, setGeneratedPrompt] = useState<string>('')
+  const [sidebarKey, setSidebarKey] = useState(0) // Force sidebar refresh
+  const [templateText, setTemplateText] = useState<string>('')
 
+  // All hooks must be called before any conditional returns
   const handleNewConversation = useCallback(() => {
-    // Clear current conversation and start fresh
+    // Start a new conversation
     setCurrentConversationId(undefined)
     setGeneratedPrompt('')
-    // Clear messages would be handled by ChatContext
-    router.push('/chat')
-  }, [router])
+    // Refresh sidebar to show updated conversation list
+    setSidebarKey(prev => prev + 1)
+  }, [])
 
   const handleSelectConversation = useCallback((id: string) => {
-    // Load conversation by ID
+    // Load selected conversation
     setCurrentConversationId(id)
     setGeneratedPrompt('') // Clear any existing generated prompt
-    router.push(`/chat/${id}`)
-  }, [router])
+  }, [])
 
   const handleDeleteConversation = useCallback((id: string) => {
     // Handle conversation deletion
@@ -36,65 +39,181 @@ function ChatPageContent() {
     if (currentConversationId === id) {
       setCurrentConversationId(undefined)
       setGeneratedPrompt('')
-      router.push('/chat')
     }
-  }, [currentConversationId, router])
+    // Refresh sidebar
+    setSidebarKey(prev => prev + 1)
+  }, [currentConversationId])
 
   const handleToggleFavorite = useCallback((id: string) => {
-    // Handle favorite toggle
+    // Handle favorite toggle - just refresh sidebar
     console.log('Toggling favorite for conversation:', id)
+    setSidebarKey(prev => prev + 1)
+  }, [])
+
+  const handleConversationCreate = useCallback((conversationId: string) => {
+    // When a new conversation is created, switch to it and refresh sidebar
+    setCurrentConversationId(conversationId)
+    setSidebarKey(prev => prev + 1)
+  }, [])
+
+  const handleConversationUpdate = useCallback(() => {
+    // When conversation is updated (new messages), refresh sidebar
+    setSidebarKey(prev => prev + 1)
   }, [])
 
   const handleGeneratePrompt = useCallback(async () => {
+    if (!currentConversationId) return
+
     try {
-      await generateFinalPrompt()
-      // The generated prompt will come through the messages
-      // We'll extract it from the last assistant message
-      const lastMessage = messages[messages.length - 1]
-      if (lastMessage && lastMessage.role === 'assistant') {
-        setGeneratedPrompt(lastMessage.content)
+      // Generate prompt via API
+      const response = await fetch('/api/ai/generate-prompt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversationId: currentConversationId
+        })
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to generate prompt')
       }
-    } catch (error) {
+
+      const result = await response.json()
+      setGeneratedPrompt(result.prompt)
+      
+      // Refresh sidebar to show updated conversation status
+      setSidebarKey(prev => prev + 1)
+      
+    } catch (error: any) {
       console.error('Failed to generate prompt:', error)
+      // Handle error appropriately
     }
-  }, [generateFinalPrompt, messages])
+  }, [currentConversationId])
+
+  const handleTemplateSelect = useCallback((template: string) => {
+    setTemplateText(template)
+  }, [])
+
+  // Now handle conditional rendering after all hooks are called
+  // Show authentication prompt if not authenticated
+  if (!loading && !user) {
+    return (
+      <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="max-w-md w-full bg-slate-800/80 backdrop-blur-sm rounded-2xl border border-slate-700/50 p-8 text-center">
+            <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-4">Welcome to Prompt Studio</h2>
+            <p className="text-gray-300 mb-8">Sign in to start creating optimized AI prompts and manage your conversations.</p>
+            
+            <div className="space-y-4">
+              <button
+                onClick={() => router.push('/login')}
+                className="w-full px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300"
+              >
+                Sign In
+              </button>
+              
+              <button
+                onClick={() => router.push('/signup')}
+                className="w-full px-6 py-3 bg-slate-700/50 text-white rounded-lg font-semibold hover:bg-slate-700 transition-all duration-300 border border-slate-600"
+              >
+                Create Account
+              </button>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-slate-600"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-2 bg-slate-800 text-gray-400">or</span>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => router.push('/')}
+                className="w-full px-6 py-3 text-gray-400 hover:text-white transition-colors duration-300 text-sm"
+              >
+                ← Back to Home
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading Prompt Studio...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null
+  }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
-      <Navbar variant="app" showUserMenu={true} />
-      
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar - Conversations */}
-        <ConversationSidebar
-          currentConversationId={currentConversationId}
-          onNewConversation={handleNewConversation}
-          onSelectConversation={handleSelectConversation}
-          onDeleteConversation={handleDeleteConversation}
-          onToggleFavorite={handleToggleFavorite}
-        />
+    <ErrorBoundary>
+      <div className="h-screen flex flex-col bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <ErrorBoundary>
+          <Navbar variant="app" showUserMenu={true} />
+        </ErrorBoundary>
         
-        {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col">
-          <ChatInterface className="flex-1" />
+        <div className="flex-1 flex overflow-hidden">
+          {/* Left Sidebar - Conversations */}
+          <ErrorBoundary>
+            <ConversationSidebar
+              key={sidebarKey}
+              currentConversationId={currentConversationId}
+              onNewConversation={handleNewConversation}
+              onSelectConversation={handleSelectConversation}
+              onDeleteConversation={handleDeleteConversation}
+              onToggleFavorite={handleToggleFavorite}
+            />
+          </ErrorBoundary>
+          
+          {/* Main Chat Area */}
+          <div className="flex-1 flex flex-col min-w-0">
+            <ErrorBoundary>
+              <ConversationChatInterface
+                conversationId={currentConversationId}
+                onConversationCreate={handleConversationCreate}
+                onConversationUpdate={handleConversationUpdate}
+                templateText={templateText}
+                onTemplateUsed={() => setTemplateText('')}
+              />
+            </ErrorBoundary>
+          </div>
+          
+          {/* Right Sidebar - Prompt Generation */}
+          <ErrorBoundary>
+            <EnhancedPromptSidebar
+              conversationId={currentConversationId}
+              generatedPrompt={generatedPrompt}
+              onGeneratePrompt={handleGeneratePrompt}
+              canGeneratePrompt={!!currentConversationId}
+              isGenerating={false}
+              onTemplateSelect={handleTemplateSelect}
+            />
+          </ErrorBoundary>
         </div>
-        
-        {/* Right Sidebar - Prompt Generation */}
-        <PromptSidebar
-          conversationId={currentConversationId}
-          generatedPrompt={generatedPrompt}
-          onGeneratePrompt={handleGeneratePrompt}
-          canGeneratePrompt={canGeneratePrompt}
-          isGenerating={isLoading}
-        />
       </div>
-    </div>
+    </ErrorBoundary>
   )
 }
 
 export default function ChatPage() {
-  return (
-    <ChatProvider>
-      <ChatPageContent />
-    </ChatProvider>
-  )
+  return <ChatPageContent />
 }

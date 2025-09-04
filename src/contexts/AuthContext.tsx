@@ -19,30 +19,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logger = getAuthLogger(process.env.NODE_ENV === 'development')
 
   useEffect(() => {
-    // Get initial session
+    // Get initial session with enhanced error handling and state sync
     const getInitialSession = async () => {
       try {
         logger.startTimer('getInitialSession')
-        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        // Add timeout to prevent hanging
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session check timeout')), 10000)
+        )
+        
+        const { data: { session }, error } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any
         
         await logger.logSessionCheck({ session }, error || undefined)
         
-        // Additional validation for user profile data
+        // Enhanced session validation
         if (session?.user) {
           const user = session.user
+          
+          // Validate session integrity
+          const now = Math.floor(Date.now() / 1000)
+          const expiresAt = session.expires_at || 0
+          
+          if (expiresAt < now) {
+            console.warn('⚠️ [AUTH] Session expired, attempting refresh')
+            try {
+              const { data: refreshData } = await supabase.auth.refreshSession()
+              if (refreshData.session) {
+                console.log('✅ [AUTH] Session refreshed successfully')
+                setState({
+                  user: refreshData.session.user,
+                  session: refreshData.session,
+                  loading: false,
+                })
+                return
+              }
+            } catch (refreshError) {
+              console.error('❌ [AUTH] Session refresh failed:', refreshError)
+            }
+          }
+          
+          // Profile validation
           if (!user.email) {
             console.warn('⚠️ [AUTH] User session exists but email is missing')
           }
-          // Add more robust profile validation
           if (!user.id) {
             console.error('❌ [AUTH] Critical: User session missing ID')
           }
+          
           if (process.env.NODE_ENV === 'development') {
             console.log('🔍 [AUTH] User profile:', {
               id: user.id,
               email: user.email,
               provider: user.app_metadata?.provider,
-              hasMetadata: !!user.user_metadata
+              hasMetadata: !!user.user_metadata,
+              expiresAt: new Date(expiresAt * 1000).toISOString()
             })
           }
         }
@@ -57,12 +92,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.log('🔍 [AUTH] Initial session loaded:', {
             hasSession: !!session,
             hasUser: !!session?.user,
-            userId: session?.user?.id
+            userId: session?.user?.id,
+            isExpired: session?.expires_at ? session.expires_at < Math.floor(Date.now() / 1000) : 'unknown'
           })
         }
-      } catch (error) {
-        console.error('❌ [AUTH] Error getting initial session:', error)
-        setState(prev => ({ ...prev, loading: false }))
+      } catch (error: any) {
+        console.error('❌ [AUTH] Error getting initial session:', {
+          message: error?.message,
+          code: error?.code,
+          stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+        })
+        setState({
+          user: null,
+          session: null,
+          loading: false
+        })
       }
     }
 

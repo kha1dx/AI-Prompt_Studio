@@ -1,8 +1,16 @@
 @import "tailwindcss";
 
+/* Root Variables - Consistent Design System */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  --accent-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --shadow-glow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  --shadow-elegant: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 @theme inline {
@@ -16,11 +24,244 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --glass-bg: rgba(0, 0, 0, 0.3);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --shadow-glow: 0 8px 32px rgba(0, 0, 0, 0.5);
   }
 }
 
+/* Global Styles for Professional Polish */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Enhanced Typography Scale */
+.heading-xl {
+  @apply text-5xl lg:text-6xl font-bold leading-tight tracking-tight;
+}
+
+.heading-lg {
+  @apply text-3xl lg:text-4xl font-bold leading-tight;
+}
+
+.heading-md {
+  @apply text-2xl font-semibold leading-snug;
+}
+
+.body-lg {
+  @apply text-lg leading-relaxed;
+}
+
+.body-md {
+  @apply text-base leading-relaxed;
+}
+
+/* Professional Button System */
+.btn-primary {
+  @apply relative inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 active:scale-95;
+  background: var(--primary-gradient);
+  box-shadow: var(--shadow-elegant);
+}
+
+.btn-primary::before {
+  content: '';
+  @apply absolute inset-0 rounded-xl bg-gradient-to-r from-purple-400 to-blue-400 opacity-0 transition-opacity duration-300;
+}
+
+.btn-primary:hover::before {
+  @apply opacity-20;
+}
+
+.btn-secondary {
+  @apply relative inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-sm text-white font-semibold rounded-xl border border-white/20 transition-all duration-300 hover:bg-white/20 hover:border-white/30 focus:outline-none focus:ring-2 focus:ring-white/50 active:scale-95;
+  box-shadow: var(--shadow-elegant);
+}
+
+/* Glassmorphism Effects */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-glow);
+}
+
+.card-gradient {
+  @apply relative overflow-hidden rounded-2xl p-8;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+}
+
+.card-gradient::before {
+  content: '';
+  @apply absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 transition-opacity duration-300;
+}
+
+.card-gradient:hover::before {
+  @apply opacity-100;
+}
+
+/* Text Gradients for Premium Feel */
+.text-gradient {
+  @apply bg-gradient-to-r from-purple-400 via-pink-400 to-blue-400 bg-clip-text text-transparent;
+}
+
+.text-gradient-gold {
+  @apply bg-gradient-to-r from-yellow-400 via-orange-400 to-yellow-500 bg-clip-text text-transparent;
+}
+
+/* Micro-Animations */
+.fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.slide-up {
+  animation: slideUp 0.8s ease-out 0.2s both;
+}
+
+.scale-in {
+  animation: scaleIn 0.8s ease-out 0.4s both;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(40px);
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from { 
+    opacity: 0; 
+    transform: scale(0.9);
+  }
+  to { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+}
+
+/* Loading Spinner */
+.loading-spinner {
+  @apply inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin;
+}
+
+/* Focus Management */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800;
+}
+
+/* Consistent Card Styling */
+.card {
+  @apply relative rounded-2xl p-6 transition-all duration-300;
+  box-shadow: var(--shadow-elegant);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Professional Form Styling */
+.form-input {
+  @apply w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/60 focus:border-white/40 focus:ring-2 focus:ring-white/20 focus:outline-none transition-all duration-300;
+}
+
+/* Chat Interface Theming Fix */
+.chat-container {
+  @apply bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100;
+}
+
+.chat-header {
+  @apply bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700;
+}
+
+.chat-message-user {
+  @apply bg-gradient-to-r from-purple-600 to-blue-600 text-white;
+}
+
+.chat-message-assistant {
+  @apply bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700;
+}
+
+.chat-input {
+  @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400;
+}
+
+/* Sidebar Consistency */
+.sidebar-primary {
+  @apply bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700;
+}
+
+.sidebar-secondary {
+  @apply bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700;
+}
+
+/* Enhanced Prompt Output Display */
+.prompt-output {
+  @apply bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-4;
+}
+
+.prompt-output pre {
+  @apply text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap font-mono leading-relaxed;
+}
+
+/* Responsive Improvements */
+@media (max-width: 768px) {
+  .heading-xl {
+    @apply text-4xl;
+  }
+  
+  .heading-lg {
+    @apply text-2xl;
+  }
+}
+
+/* Accessibility Improvements */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .slide-up,
+  .scale-in {
+    animation: none;
+  }
+  
+  .btn-primary,
+  .btn-secondary,
+  .card {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .btn-primary {
+    @apply border-2 border-white;
+  }
+  
+  .text-gradient {
+    @apply bg-none text-white;
+  }
 }

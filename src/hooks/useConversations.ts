@@ -20,11 +20,79 @@ export function useConversations() {
     try {
       setIsLoading(true)
       setError(null)
-      const data = await conversationService.getAll(user.id)
+      
+      // Add retry logic for transient failures
+      let retries = 3
+      let data = []
+      
+      while (retries > 0) {
+        try {
+          data = await conversationService.getAll(user.id)
+          break // Success, exit retry loop
+        } catch (retryError: any) {
+          retries--
+          
+          // Don't retry authentication errors
+          if (retryError?.message?.includes('JWT') || 
+              retryError?.message?.includes('Auth session missing') ||
+              retryError?.message?.includes('auth') || 
+              retryError?.message?.includes('401') ||
+              retryError?.status === 401) {
+            console.log('Authentication error - not retrying:', {
+              message: retryError?.message,
+              code: retryError?.code,
+              status: retryError?.status
+            })
+            data = [] // Return empty array for auth issues
+            break
+          }
+          
+          if (retries === 0) {
+            throw retryError // Re-throw if all retries exhausted
+          }
+          
+          console.warn(`Retrying conversation load (${retries} attempts left):`, retryError?.message)
+          // Wait before retry (exponential backoff)
+          await new Promise(resolve => setTimeout(resolve, Math.pow(2, 3 - retries) * 1000))
+        }
+      }
+      
       setConversations(data)
-    } catch (err) {
-      console.error('Error loading conversations:', err)
-      setError('Failed to load conversations')
+      
+    } catch (err: any) {
+      // Enhanced error logging with proper serialization
+      const errorDetails = {
+        message: err?.message || 'Unknown error',
+        code: err?.code || 'UNKNOWN',
+        status: err?.status || 500,
+        details: err?.details || null,
+        hint: err?.hint || null,
+        name: err?.name || 'Error',
+        timestamp: new Date().toISOString(),
+        userId: user?.id || 'unknown',
+        ...(process.env.NODE_ENV === 'development' && {
+          stack: err?.stack,
+          cause: err?.cause ? String(err.cause) : null
+        })
+      }
+      
+      console.error('Error loading conversations (final):', JSON.stringify(errorDetails, null, 2))
+      
+      // Enhanced authentication error detection
+      const isAuthError = err?.message?.includes('JWT') || 
+                         err?.message?.includes('Auth session missing') ||
+                         err?.message?.includes('auth') || 
+                         err?.message?.includes('401') ||
+                         err?.status === 401 ||
+                         err?.code === 'PGRST301'
+      
+      if (isAuthError) {
+        console.log('Authentication error detected - setting empty conversations')
+        setConversations([])
+        setError(null) // Don't show error for auth issues
+      } else {
+        setError(`Failed to load conversations: ${err?.message || 'Unknown error'}`)
+      }
     } finally {
       setIsLoading(false)
     }

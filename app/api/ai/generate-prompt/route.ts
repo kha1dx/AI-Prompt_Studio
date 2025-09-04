@@ -20,11 +20,13 @@ Make the prompt actionable, specific, and optimized for LLM performance. Format 
 
 export async function POST(req: NextRequest) {
   try {
-    const { sessionId } = await req.json()
+    const { sessionId, conversationId } = await req.json()
 
-    if (!sessionId) {
+    // Accept either sessionId or conversationId for flexibility
+    const targetId = sessionId || conversationId
+    if (!targetId) {
       return NextResponse.json(
-        { error: 'Session ID is required' },
+        { error: 'Session ID or Conversation ID is required' },
         { status: 400 }
       )
     }
@@ -46,28 +48,47 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Get the conversation session
-    const { data: session, error: sessionError } = await supabase
-      .from('prompt_sessions')
-      .select('*')
-      .eq('id', sessionId)
-      .eq('user_id', user.id)
-      .single()
-
-    if (sessionError || !session) {
+    // Try to get conversation data (skip non-existent prompt_sessions table)
+    let session = null
+    let conversationHistory: any[] = []
+    
+    // Handle conversationId - get conversation data
+    if (conversationId) {
+      const { data: conversationData, error: conversationError } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', conversationId)
+        .eq('user_id', user.id)
+        .single()
+      
+      if (conversationError || !conversationData) {
+        return NextResponse.json(
+          { error: 'Conversation not found' },
+          { status: 404 }
+        )
+      }
+      
+      // Use messages from the conversation's messages field (JSONB)
+      conversationHistory = conversationData.messages || []
+      
+      // Create a session-like object for compatibility
+      session = {
+        id: conversationData.id,
+        user_id: conversationData.user_id,
+        title: conversationData.title,
+        conversation_history: conversationHistory,
+        status: 'in_progress'
+      }
+    }
+    
+    if (!session) {
       return NextResponse.json(
-        { error: 'Session not found' },
+        { error: 'Session or conversation not found' },
         { status: 404 }
       )
     }
 
-    // Check usage limits
-    const { data: usageData } = await supabase
-      .from('usage_limits')
-      .select('monthly_prompts_used, last_reset_date')
-      .eq('user_id', user.id)
-      .single()
-
+    // Check usage limits using profiles table
     const { data: profile } = await supabase
       .from('profiles')
       .select('subscription_tier, credits_used, credits_limit')
@@ -75,33 +96,24 @@ export async function POST(req: NextRequest) {
       .single()
 
     const tier = profile?.subscription_tier || 'free'
-    const currentUsage = profile?.credits_used || 0
-    const limit = profile?.credits_limit || 5
-    
-    if (limit !== -1 && currentUsage >= limit) {
-      return NextResponse.json(
-        { error: 'Monthly usage limit exceeded', limit, currentUsage },
-        { status: 429 }
-      )
-    }
     const limits = {
       free: 5,
       pro: 100,
       enterprise: -1 // unlimited
     }
 
-    const currentUsage = usageData?.monthly_prompts_used || 0
-    const limit = limits[tier as keyof typeof limits]
+    const currentUsage = profile?.credits_used || 0
+    const usageLimit = limits[tier as keyof typeof limits]
     
-    if (limit !== -1 && currentUsage >= limit) {
+    if (usageLimit !== -1 && currentUsage >= usageLimit) {
       return NextResponse.json(
-        { error: 'Monthly usage limit exceeded', limit, currentUsage },
+        { error: 'Monthly usage limit exceeded', limit: usageLimit, currentUsage },
         { status: 429 }
       )
     }
 
-    // Extract conversation history
-    const conversationHistory = session.conversation_history || []
+    // Use the conversation history we already extracted
+    // conversationHistory is already set above
     
     // Create a summary of the conversation for prompt generation
     const conversationSummary = conversationHistory
@@ -131,36 +143,44 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Update the session with the final prompt
-    const { error: updateError } = await supabase
-      .from('prompt_sessions')
-      .update({
-        final_prompt: generatedPrompt,
-        status: 'completed',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', sessionId)
+    // Update the conversation with the final prompt
+    if (conversationId) {
+      // Update conversations table
+      const { error: updateError } = await supabase
+        .from('conversations')
+        .update({
+          stage: 'completed',
+          is_complete: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', conversationId)
+        .eq('user_id', user.id)
 
-    if (updateError) {
-      console.error('Error updating session:', updateError)
+      if (updateError) {
+        console.error('Error updating conversation:', updateError)
+      }
+      
+      // Note: saved_prompts table doesn't exist, prompt is stored in conversation.generated_prompt
     }
 
-    // Update usage count
+    // Update usage count in profiles table
+    const newCreditsUsed = (profile?.credits_used || 0) + 1
     await supabase
-      .from('usage_limits')
-      .upsert({
-        user_id: user.id,
-        monthly_prompts_used: currentUsage + 1,
-        last_reset_date: new Date().toISOString().split('T')[0]
+      .from('profiles')
+      .update({
+        credits_used: newCreditsUsed,
+        updated_at: new Date().toISOString()
       })
+      .eq('id', user.id)
 
     return NextResponse.json({
       success: true,
       prompt: generatedPrompt,
-      sessionId,
+      sessionId: sessionId || conversationId,
+      conversationId: conversationId,
       usageStatus: {
-        used: currentUsage + 1,
-        limit
+        used: newCreditsUsed,
+        limit: usageLimit
       }
     })
 

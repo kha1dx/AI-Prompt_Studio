@@ -57,7 +57,7 @@ export function MessageInput({
   }, [message])
 
   return (
-    <div className="border-t border-gray-200 bg-white dark:bg-gray-800 dark:border-gray-700 p-4">
+    <div className="border-t border-slate-700/50 bg-slate-800/80 backdrop-blur-sm p-4">
       <form onSubmit={handleSubmit} className="flex items-end space-x-3">
         <div className="flex-1 relative">
           <textarea
@@ -70,12 +70,12 @@ export function MessageInput({
             placeholder={placeholder}
             disabled={disabled}
             className={`
-              w-full resize-none rounded-lg border border-gray-300 dark:border-gray-600
-              bg-white dark:bg-gray-700 px-4 py-3 pr-12
-              text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400
-              focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
+              w-full resize-none rounded-lg border border-slate-600/50 shadow-lg
+              bg-slate-700/50 backdrop-blur-sm px-4 py-3 pr-12
+              text-gray-100 placeholder-gray-400
+              focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50
               disabled:opacity-50 disabled:cursor-not-allowed
-              transition-all duration-200 ease-in-out
+              transition-all duration-200 ease-in-out hover:bg-slate-700/70
               ${isExpanded ? 'rounded-lg' : 'rounded-full'}
             `}
             style={{
@@ -87,7 +87,7 @@ export function MessageInput({
           
           {/* Character counter for long messages */}
           {message.length > 500 && (
-            <div className="absolute bottom-2 right-12 text-xs text-gray-400">
+            <div className="absolute bottom-2 right-12 text-xs text-gray-300">
               {message.length}/2000
             </div>
           )}
@@ -100,8 +100,8 @@ export function MessageInput({
             flex-shrink-0 p-3 rounded-full transition-all duration-200
             ${
               message.trim() && !disabled
-                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
-                : 'bg-gray-200 dark:bg-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105'
+                : 'bg-slate-600/50 text-gray-400 cursor-not-allowed'
             }
           `}
           aria-label="Send message"
@@ -145,7 +145,7 @@ export function MessageInput({
       </form>
 
       {/* Input hints */}
-      <div className="flex justify-between items-center mt-2 text-xs text-gray-500 dark:text-gray-400">
+      <div className="flex justify-between items-center mt-2 text-xs text-gray-400">
         <span>Press Enter to send, Shift + Enter for new line</span>
         {message.length > 0 && (
           <span className="flex items-center space-x-1">
