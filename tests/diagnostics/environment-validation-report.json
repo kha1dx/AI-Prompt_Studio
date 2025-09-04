@@ -1,0 +1,79 @@
+{
+  "timestamp": "2025-09-04T08:33:38.668Z",
+  "summary": {
+    "total": 7,
+    "passed": 0,
+    "failed": 3,
+    "warnings": 1,
+    "info": 3,
+    "critical": 3
+  },
+  "results": [
+    {
+      "category": "file_check",
+      "variable": "env_files",
+      "status": "FAIL",
+      "message": "No environment files found",
+      "value": null,
+      "severity": "critical",
+      "timestamp": "2025-09-04T08:33:38.667Z"
+    },
+    {
+      "category": "supabase",
+      "variable": "NEXT_PUBLIC_SUPABASE_URL",
+      "status": "FAIL",
+      "message": "Required variable is missing",
+      "value": null,
+      "severity": "critical",
+      "timestamp": "2025-09-04T08:33:38.667Z"
+    },
+    {
+      "category": "supabase",
+      "variable": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "status": "FAIL",
+      "message": "Required variable is missing",
+      "value": null,
+      "severity": "critical",
+      "timestamp": "2025-09-04T08:33:38.667Z"
+    },
+    {
+      "category": "supabase",
+      "variable": "SUPABASE_SERVICE_ROLE_KEY",
+      "status": "WARNING",
+      "message": "Optional variable not set",
+      "value": null,
+      "severity": "normal",
+      "timestamp": "2025-09-04T08:33:38.667Z"
+    },
+    {
+      "category": "auth",
+      "variable": "NEXTAUTH_URL",
+      "status": "INFO",
+      "message": "Optional variable not set",
+      "value": null,
+      "severity": "normal",
+      "timestamp": "2025-09-04T08:33:38.667Z"
+    },
+    {
+      "category": "auth",
+      "variable": "NEXTAUTH_SECRET",
+      "status": "INFO",
+      "message": "Optional variable not set",
+      "value": null,
+      "severity": "normal",
+      "timestamp": "2025-09-04T08:33:38.667Z"
+    },
+    {
+      "category": "email",
+      "variable": "email_service",
+      "status": "INFO",
+      "message": "Using Supabase default email service",
+      "value": null,
+      "severity": "normal",
+      "timestamp": "2025-09-04T08:33:38.667Z"
+    }
+  ],
+  "recommendations": [
+    "Review your Supabase project configuration in the dashboard"
+  ]
+}

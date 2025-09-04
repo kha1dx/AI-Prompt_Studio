@@ -1,0 +1,90 @@
+{
+  "timestamp": "2025-09-04T08:33:59.284Z",
+  "summary": {
+    "total": 9,
+    "passed": 7,
+    "failed": 2,
+    "warnings": 0
+  },
+  "results": [
+    {
+      "test": "env_check",
+      "status": "PASS",
+      "message": "NEXT_PUBLIC_SUPABASE_URL is properly set",
+      "details": null,
+      "timestamp": "2025-09-04T08:33:58.151Z"
+    },
+    {
+      "test": "env_check",
+      "status": "PASS",
+      "message": "NEXT_PUBLIC_SUPABASE_ANON_KEY is properly set",
+      "details": null,
+      "timestamp": "2025-09-04T08:33:58.151Z"
+    },
+    {
+      "test": "env_check",
+      "status": "PASS",
+      "message": "SUPABASE_SERVICE_ROLE_KEY is properly set",
+      "details": null,
+      "timestamp": "2025-09-04T08:33:58.151Z"
+    },
+    {
+      "test": "url_format",
+      "status": "PASS",
+      "message": "Valid Supabase URL format",
+      "details": null,
+      "timestamp": "2025-09-04T08:33:58.151Z"
+    },
+    {
+      "test": "network_connectivity",
+      "status": "PASS",
+      "message": "Network connectivity successful",
+      "details": {
+        "statusCode": 401,
+        "responseTime": 277
+      },
+      "timestamp": "2025-09-04T08:33:58.429Z"
+    },
+    {
+      "test": "client_creation",
+      "status": "PASS",
+      "message": "Supabase client created successfully",
+      "details": null,
+      "timestamp": "2025-09-04T08:33:58.448Z"
+    },
+    {
+      "test": "api_test",
+      "status": "FAIL",
+      "message": "API test failed: Could not find the table 'public._' in the schema cache",
+      "details": {
+        "error": {
+          "code": "PGRST205",
+          "details": null,
+          "hint": null,
+          "message": "Could not find the table 'public._' in the schema cache"
+        }
+      },
+      "timestamp": "2025-09-04T08:33:58.960Z"
+    },
+    {
+      "test": "database_connection",
+      "status": "FAIL",
+      "message": "Database connection failed: Could not find the table 'public.information_schema.tables' in the schema cache",
+      "details": null,
+      "timestamp": "2025-09-04T08:33:59.283Z"
+    },
+    {
+      "test": "auth_endpoint",
+      "status": "PASS",
+      "message": "Auth endpoint accessible",
+      "details": {
+        "responseTime": 1,
+        "hasSession": false
+      },
+      "timestamp": "2025-09-04T08:33:59.284Z"
+    }
+  ],
+  "recommendations": [
+    "Ensure your Supabase project database is active"
+  ]
+}

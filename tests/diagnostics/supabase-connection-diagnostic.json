@@ -1,0 +1,43 @@
+{
+  "timestamp": "2025-09-04T08:33:38.666Z",
+  "summary": {
+    "total": 4,
+    "passed": 0,
+    "failed": 4,
+    "warnings": 0
+  },
+  "results": [
+    {
+      "test": "env_check",
+      "status": "FAIL",
+      "message": "NEXT_PUBLIC_SUPABASE_URL is not set",
+      "details": null,
+      "timestamp": "2025-09-04T08:33:38.666Z"
+    },
+    {
+      "test": "env_check",
+      "status": "FAIL",
+      "message": "NEXT_PUBLIC_SUPABASE_ANON_KEY is not set",
+      "details": null,
+      "timestamp": "2025-09-04T08:33:38.666Z"
+    },
+    {
+      "test": "env_check",
+      "status": "FAIL",
+      "message": "SUPABASE_SERVICE_ROLE_KEY is not set",
+      "details": null,
+      "timestamp": "2025-09-04T08:33:38.666Z"
+    },
+    {
+      "test": "client_creation",
+      "status": "FAIL",
+      "message": "Missing Supabase credentials",
+      "details": null,
+      "timestamp": "2025-09-04T08:33:38.666Z"
+    }
+  ],
+  "recommendations": [
+    "Update your .env.local file with correct Supabase credentials",
+    "Verify your Supabase project URL and API keys are correct"
+  ]
+}

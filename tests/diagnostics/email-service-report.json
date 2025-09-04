@@ -1,0 +1,58 @@
+{
+  "timestamp": "2025-09-04T08:33:38.769Z",
+  "summary": {
+    "total": 4,
+    "passed": 0,
+    "failed": 2,
+    "warnings": 0,
+    "skipped": 1,
+    "info": 1
+  },
+  "results": [
+    {
+      "test": "email_config",
+      "status": "INFO",
+      "message": "Using Supabase default email service",
+      "details": null,
+      "duration": null,
+      "timestamp": "2025-09-04T08:33:38.669Z"
+    },
+    {
+      "test": "supabase_email",
+      "status": "FAIL",
+      "message": "Missing Supabase credentials",
+      "details": null,
+      "duration": null,
+      "timestamp": "2025-09-04T08:33:38.669Z"
+    },
+    {
+      "test": "email_templates",
+      "status": "SKIP",
+      "message": "No Supabase client available",
+      "details": null,
+      "duration": null,
+      "timestamp": "2025-09-04T08:33:38.669Z"
+    },
+    {
+      "test": "email_deliverability",
+      "status": "FAIL",
+      "message": "Poor deliverability score: 0%",
+      "details": {
+        "score": 0,
+        "total_possible": 3,
+        "percentage": 0
+      },
+      "duration": null,
+      "timestamp": "2025-09-04T08:33:38.769Z"
+    }
+  ],
+  "recommendations": [
+    "Consider configuring custom SMTP for production use",
+    "Review Supabase email limits and restrictions",
+    "Configure SPF record: \"v=spf1 include:_spf.supabase.co ~all\"",
+    "Set up DMARC policy for your domain",
+    "Consider using a dedicated email service (SendGrid, Mailgun, etc.)",
+    "Test email delivery in different environments (dev, staging, prod)",
+    "Monitor email delivery rates and spam folder placement"
+  ]
+}

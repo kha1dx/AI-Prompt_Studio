@@ -1,0 +1,44 @@
+{
+  "name": "supabase-auth-diagnostics",
+  "version": "1.0.0",
+  "description": "Comprehensive diagnostic suite for Supabase authentication systems",
+  "main": "run-all-diagnostics.js",
+  "scripts": {
+    "test": "node run-all-diagnostics.js",
+    "test:connection": "node 01-connection-health.js",
+    "test:environment": "node 02-environment-validation.js",
+    "test:auth-flow": "node 03-authentication-flow.js",
+    "test:email": "node 04-email-service.js",
+    "test:oauth": "node 05-oauth-flow.js",
+    "test:database": "node 06-database-policy.js",
+    "test:errors": "node 07-error-scenarios.js",
+    "test:all": "node run-all-diagnostics.js",
+    "test:critical": "npm run test:connection && npm run test:environment && npm run test:auth-flow && npm run test:database",
+    "install-deps": "cd ../.. && npm install dotenv nodemailer"
+  },
+  "keywords": [
+    "supabase",
+    "authentication",
+    "testing",
+    "diagnostics",
+    "security"
+  ],
+  "author": "Authentication Testing Suite",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.0",
+    "dotenv": "^16.0.0",
+    "nodemailer": "^6.9.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "local"
+  },
+  "bugs": {
+    "url": "local"
+  },
+  "homepage": "local"
+}
