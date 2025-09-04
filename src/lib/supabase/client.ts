@@ -26,7 +26,15 @@ const mockClient = {
 
 export const createClient = (): SupabaseClient =>
   isSupabaseConfigured 
-    ? createBrowserClient(supabaseUrl, supabaseAnonKey)
+    ? createBrowserClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          flowType: 'pkce',
+          autoRefreshToken: true,
+          persistSession: true,
+          detectSessionInUrl: true,
+          debug: process.env.NODE_ENV === 'development'
+        }
+      })
     : mockClient
 
 export const supabase = createClient()

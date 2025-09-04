@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '../../src/contexts/AuthContext'
 import { AuthLayout } from '../../src/components/auth/AuthLayout'
 import { AuthForm } from '../../src/components/auth/AuthForm'
@@ -12,6 +12,48 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const { signIn, signInWithGoogle } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  // Handle OAuth callback errors
+  useEffect(() => {
+    const oauthError = searchParams.get('error')
+    const errorMessage = searchParams.get('message')
+    
+    if (oauthError) {
+      console.log('🔍 [AUTH] OAuth error detected:', { oauthError, errorMessage })
+      
+      switch (oauthError) {
+        case 'pkce_error':
+          setError('PKCE authentication failed. This is a security feature. Please try signing in again.')
+          break
+        case 'auth_error':
+          setError(errorMessage ? decodeURIComponent(errorMessage) : 'Authentication failed')
+          break
+        case 'no_user':
+          setError('Authentication succeeded but no user profile was received. Please try again.')
+          break
+        case 'callback_error':
+          setError(errorMessage ? decodeURIComponent(errorMessage) : 'Unexpected authentication error')
+          break
+        case 'invalid_callback':
+          setError('Invalid authentication callback. Please try signing in again.')
+          break
+        case 'bad_oauth_state':
+          setError('OAuth state validation failed. This security check has failed. Please try again.')
+          break
+        default:
+          setError(errorMessage ? decodeURIComponent(errorMessage) : 'Authentication failed')
+      }
+      
+      // Clear URL parameters after displaying error
+      const cleanUrl = window.location.pathname
+      window.history.replaceState(null, '', cleanUrl)
+    }
+    
+    if (errorMessage === 'please_try_again') {
+      setError('Authentication session recovery needed. Please try signing in again.')
+    }
+  }, [searchParams])
 
   const handleEmailLogin = async (email: string, password: string) => {
     try {

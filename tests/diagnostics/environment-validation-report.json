@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-09-04T08:33:38.668Z",
+  "timestamp": "2025-09-04T13:27:54.703Z",
   "summary": {
     "total": 7,
     "passed": 0,
@@ -16,7 +16,7 @@
       "message": "No environment files found",
       "value": null,
       "severity": "critical",
-      "timestamp": "2025-09-04T08:33:38.667Z"
+      "timestamp": "2025-09-04T13:27:54.702Z"
     },
     {
       "category": "supabase",
@@ -25,7 +25,7 @@
       "message": "Required variable is missing",
       "value": null,
       "severity": "critical",
-      "timestamp": "2025-09-04T08:33:38.667Z"
+      "timestamp": "2025-09-04T13:27:54.702Z"
     },
     {
       "category": "supabase",
@@ -34,7 +34,7 @@
       "message": "Required variable is missing",
       "value": null,
       "severity": "critical",
-      "timestamp": "2025-09-04T08:33:38.667Z"
+      "timestamp": "2025-09-04T13:27:54.702Z"
     },
     {
       "category": "supabase",
@@ -43,7 +43,7 @@
       "message": "Optional variable not set",
       "value": null,
       "severity": "normal",
-      "timestamp": "2025-09-04T08:33:38.667Z"
+      "timestamp": "2025-09-04T13:27:54.702Z"
     },
     {
       "category": "auth",
@@ -52,7 +52,7 @@
       "message": "Optional variable not set",
       "value": null,
       "severity": "normal",
-      "timestamp": "2025-09-04T08:33:38.667Z"
+      "timestamp": "2025-09-04T13:27:54.702Z"
     },
     {
       "category": "auth",
@@ -61,7 +61,7 @@
       "message": "Optional variable not set",
       "value": null,
       "severity": "normal",
-      "timestamp": "2025-09-04T08:33:38.667Z"
+      "timestamp": "2025-09-04T13:27:54.702Z"
     },
     {
       "category": "email",
@@ -70,7 +70,7 @@
       "message": "Using Supabase default email service",
       "value": null,
       "severity": "normal",
-      "timestamp": "2025-09-04T08:33:38.667Z"
+      "timestamp": "2025-09-04T13:27:54.703Z"
     }
   ],
   "recommendations": [

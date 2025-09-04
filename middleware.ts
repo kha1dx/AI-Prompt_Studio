@@ -46,10 +46,21 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
+  // Add logging for debugging auth flow
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 [MIDDLEWARE]', {
+      path: request.nextUrl.pathname,
+      hasUser: !!user,
+      userId: user?.id?.substring(0, 8) + '...',
+      userEmail: user?.email?.replace(/^(.{3}).*(@.+)$/, '$1***$2')
+    })
+  }
+
   // Protected routes
   if (request.nextUrl.pathname.startsWith('/dashboard')) {
     if (!user) {
       // no user, redirect to login page
+      console.log('🚪 [MIDDLEWARE] Redirecting to login: no user for protected route')
       const url = request.nextUrl.clone()
       url.pathname = '/login'
       return NextResponse.redirect(url)
@@ -58,6 +69,7 @@ export async function middleware(request: NextRequest) {
 
   // Redirect authenticated users away from auth pages
   if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
+    console.log('🔄 [MIDDLEWARE] Redirecting authenticated user to dashboard')
     const url = request.nextUrl.clone()
     url.pathname = '/dashboard'
     return NextResponse.redirect(url)

@@ -27,6 +27,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         await logger.logSessionCheck({ session }, error || undefined)
         
+        // Additional validation for user profile data
+        if (session?.user) {
+          const user = session.user
+          if (!user.email) {
+            console.warn('⚠️ [AUTH] User session exists but email is missing')
+          }
+          // Add more robust profile validation
+          if (!user.id) {
+            console.error('❌ [AUTH] Critical: User session missing ID')
+          }
+          if (process.env.NODE_ENV === 'development') {
+            console.log('🔍 [AUTH] User profile:', {
+              id: user.id,
+              email: user.email,
+              provider: user.app_metadata?.provider,
+              hasMetadata: !!user.user_metadata
+            })
+          }
+        }
+        
         setState({
           user: session?.user ?? null,
           session,
@@ -73,6 +93,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           session?.user || null,
           session
         )
+        
+        // Validate user profile completeness
+        if (session?.user) {
+          const user = session.user
+          if (process.env.NODE_ENV === 'development') {
+            console.log('📋 [AUTH] User profile check:', {
+              hasId: !!user.id,
+              hasEmail: !!user.email,
+              hasMetadata: !!user.user_metadata,
+              provider: user.app_metadata?.provider,
+              emailVerified: user.email_confirmed_at
+            })
+          }
+          
+          // Check for missing critical profile data
+          if (!user.email && !user.phone) {
+            console.error('❌ [AUTH] Critical: User authenticated but no email or phone found')
+          }
+          if (!user.id) {
+            console.error('❌ [AUTH] Critical: User authenticated but missing user ID')
+          }
+        }
         
         setState({
           user: session?.user ?? null,
@@ -182,10 +224,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
+      logger.startTimer('signInWithGoogle')
+      
       if (process.env.NODE_ENV === 'development') {
         console.log('🔗 [AUTH] Attempting Google OAuth sign in')
       }
       
+      // Use simple Supabase OAuth - this is the original working implementation
       const response = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -194,7 +239,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             access_type: 'offline',
             prompt: 'consent'
           }
-        },
+        }
       })
       
       await logger.logOAuthSignIn('google', response)
@@ -202,7 +247,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (response.error) {
         console.error('❌ [AUTH] Google OAuth failed:', response.error.message)
       } else {
-        console.log('🔄 [AUTH] Redirecting to Google OAuth...')
+        console.log('✅ [AUTH] Google OAuth initiated successfully')
       }
       
       return response

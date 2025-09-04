@@ -2,6 +2,8 @@
 
 import { useAuth } from '../../src/contexts/AuthContext'
 import { ProtectedRoute } from '../../src/components/auth/ProtectedRoute'
+import { ChatInterface } from '../../src/components/chat/ChatInterface'
+import { MobileLayout } from '../../src/components/chat/MobileLayout'
 
 function DashboardContent() {
   const { user, signOut } = useAuth()
@@ -11,7 +13,14 @@ function DashboardContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      {/* Mobile Layout */}
+      <MobileLayout>
+        <ChatInterface className="h-full" />
+      </MobileLayout>
+
+      {/* Desktop Layout */}
+      <div className="min-h-screen bg-gray-50 flex-col hidden md:flex">
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -37,72 +46,74 @@ function DashboardContent() {
         </div>
       </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="border-4 border-dashed border-gray-200 rounded-lg h-96">
-            <div className="flex items-center justify-center h-full">
-              <div className="text-center">
-                <svg
-                  className="mx-auto h-12 w-12 text-gray-400"
-                  stroke="currentColor"
-                  fill="none"
-                  viewBox="0 0 48 48"
-                >
-                  <path
-                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">
-                  Welcome to your dashboard!
-                </h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  This is a protected route. Only authenticated users can see this page.
-                </p>
-                <div className="mt-4">
-                  <div className="bg-white overflow-hidden shadow rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                      <h4 className="text-lg leading-6 font-medium text-gray-900">
-                        User Information
-                      </h4>
-                      <div className="mt-2 max-w-xl text-sm text-gray-500">
-                        <p>Your account details:</p>
-                      </div>
-                      <div className="mt-3">
-                        <dl className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-2">
-                          <div>
-                            <dt className="text-sm font-medium text-gray-500">Email</dt>
-                            <dd className="mt-1 text-sm text-gray-900">{user?.email}</dd>
-                          </div>
-                          <div>
-                            <dt className="text-sm font-medium text-gray-500">User ID</dt>
-                            <dd className="mt-1 text-sm text-gray-900">{user?.id}</dd>
-                          </div>
-                          <div>
-                            <dt className="text-sm font-medium text-gray-500">Email Verified</dt>
-                            <dd className="mt-1 text-sm text-gray-900">
-                              {user?.email_confirmed_at ? 'Yes' : 'No'}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt className="text-sm font-medium text-gray-500">Last Sign In</dt>
-                            <dd className="mt-1 text-sm text-gray-900">
-                              {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'N/A'}
-                            </dd>
-                          </div>
-                        </dl>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+      <main className="flex-1 flex overflow-hidden">
+        {/* Sidebar with user info */}
+        <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Account Details
+            </h3>
+            <div className="space-y-3">
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Email</dt>
+                <dd className="mt-1 text-sm text-gray-900 break-words">{user?.email}</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Status</dt>
+                <dd className="mt-1">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    {user?.email_confirmed_at ? 'Verified' : 'Pending'}
+                  </span>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-gray-500">Last Active</dt>
+                <dd className="mt-1 text-sm text-gray-900">
+                  {user?.last_sign_in_at ? new Date(user.last_sign_in_at).toLocaleString() : 'N/A'}
+                </dd>
               </div>
             </div>
           </div>
+          
+          {/* Chat Features */}
+          <div className="p-6">
+            <h4 className="text-sm font-semibold text-gray-900 mb-3">Chat Features</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex items-center">
+                <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Real-time streaming responses
+              </li>
+              <li className="flex items-center">
+                <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Message export & copy
+              </li>
+              <li className="flex items-center">
+                <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Mobile responsive design
+              </li>
+              <li className="flex items-center">
+                <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Accessible keyboard navigation
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Chat Interface */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <ChatInterface className="h-full" />
         </div>
       </main>
     </div>
+    </>
   )
 }
 

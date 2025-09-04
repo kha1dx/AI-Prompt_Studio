@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "../src/contexts/AuthContext";
+import { ChatProvider } from "../src/contexts/ChatContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -14,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Prompt Studio - Authentication",
-  description: "Secure authentication system with Supabase",
+  title: "Prompt Studio - AI Chat Interface",
+  description: "Modern AI chat interface with real-time streaming and secure authentication",
 };
 
 export default function RootLayout({
@@ -29,7 +30,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          {children}
+          <ChatProvider>
+            {children}
+          </ChatProvider>
         </AuthProvider>
       </body>
     </html>

@@ -19,6 +19,12 @@ export const createClient = async (): Promise<SupabaseClient> => {
   const cookieStore = await cookies()
   
   return createServerClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      flowType: 'pkce',
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true
+    },
     cookies: {
       getAll() {
         return cookieStore.getAll()
