@@ -1,0 +1,189 @@
+
+> prompt-studio@0.1.0 dev
+> next dev --turbopack
+
+ ⚠ Warning: Next.js inferred your workspace root, but it may not be correct.
+ We detected multiple lockfiles and selected the directory of /Users/khal1dx/package-lock.json as the root directory.
+ To silence this warning, set `turbopack.root` in your Next.js config, or consider removing one of the lockfiles if it's not needed.
+   See https://nextjs.org/docs/app/api-reference/config/next-config-js/turbopack#root-directory for more information.
+ Detected additional lockfiles: 
+   * /Users/khal1dx/Desktop/khal1dx/vscode/Prompt studio/my-app/prompt-studio/package-lock.json
+
+ ⚠ Port 3000 is in use by process 23746, using available port 3001 instead.
+   ▲ Next.js 15.5.2 (Turbopack)
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.0.190:3001
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Compiled middleware in 193ms
+ ✓ Ready in 1202ms
+⚠️ [MIDDLEWARE] Auth error: Auth session missing!
+🔍 [MIDDLEWARE] {
+  path: '/chat',
+  hasUser: false,
+  userId: 'undefined...',
+  userEmail: undefined,
+  timestamp: '2025-09-05T07:14:03.904Z'
+}
+ ○ Compiling /chat ...
+ ✓ Compiled /chat in 2.3s
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.489Z #_acquireLock begin -1
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.489Z #_acquireLock lock acquired for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.491Z #_handleVisibilityChange()
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.494Z #onAuthStateChange() registered callback with id ca582214-a41c-448c-8e5e-3ef647e4d4cf
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.495Z #_initialize() end
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.512Z #_acquireLock begin -1
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.512Z #_acquireLock lock acquired for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.512Z #_handleVisibilityChange()
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.512Z #onAuthStateChange() registered callback with id 472594eb-4beb-4696-b405-3ed5a2fa6836
+📋 [AUTH] Auth Logger initialized
+  Details: { debugMode: true }
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.521Z #_initialize() end
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.523Z #_acquireLock lock released for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.524Z #_acquireLock end
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.524Z #_acquireLock lock released for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.525Z #_acquireLock begin -1
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.525Z #_acquireLock lock acquired for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.525Z #_useSession begin
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.525Z #__loadSession() begin
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.525Z #_acquireLock end
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.525Z #_acquireLock begin -1
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.525Z #_acquireLock lock acquired for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.525Z #_useSession begin
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.525Z #__loadSession() begin
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.525Z #_acquireLock lock released for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.525Z #getSession() session from storage null
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.525Z #__loadSession() end
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.525Z #_acquireLock end
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.525Z #_acquireLock lock released for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.525Z INITIAL_SESSION callback id ca582214-a41c-448c-8e5e-3ef647e4d4cf session null
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.525Z #getSession() session from storage null
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.525Z #__loadSession() end
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.525Z #_acquireLock end
+GoTrueClient@0 (2.71.1) 2025-09-05T07:14:06.525Z #_useSession end
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.525Z INITIAL_SESSION callback id 472594eb-4beb-4696-b405-3ed5a2fa6836 session null
+GoTrueClient@1 (2.71.1) 2025-09-05T07:14:06.526Z #_useSession end
+ HEAD /chat 200 in 2621ms
+   Reload env: .env.local
+🔍 [MIDDLEWARE] {
+  path: '/',
+  hasUser: true,
+  userId: '7f403f29...',
+  userEmail: 'kha***@gmail.com',
+  timestamp: '2025-09-05T07:20:00.820Z'
+}
+ ✓ Compiled / in 317ms
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.305Z #_acquireLock begin -1
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.305Z #_acquireLock lock acquired for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.305Z #_handleVisibilityChange()
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.306Z #onAuthStateChange() registered callback with id 2d52441e-8785-460e-a2d7-f8977e49d1fa
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.306Z #_acquireLock begin -1
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.306Z #_acquireLock lock acquired for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.306Z #_handleVisibilityChange()
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.306Z #onAuthStateChange() registered callback with id 42e1d402-5112-4c29-9a0f-a42fd994081f
+📋 [AUTH] Auth Logger initialized
+  Details: { debugMode: true }
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.346Z #_initialize() end
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.347Z #_initialize() end
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.349Z #_acquireLock lock released for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.349Z #_acquireLock lock released for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.349Z #_acquireLock end
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.349Z #_acquireLock end
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.349Z #_acquireLock begin -1
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.349Z #_acquireLock lock acquired for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.349Z #_useSession begin
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.349Z #__loadSession() begin
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.349Z #_acquireLock begin -1
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.349Z #_acquireLock lock acquired for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.349Z #_useSession begin
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.349Z #__loadSession() begin
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.350Z #_acquireLock lock released for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.350Z #_acquireLock lock released for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.350Z #getSession() session from storage null
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.350Z #__loadSession() end
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.350Z #_acquireLock end
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.350Z #getSession() session from storage null
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.350Z #__loadSession() end
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.350Z #_acquireLock end
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.350Z INITIAL_SESSION callback id 2d52441e-8785-460e-a2d7-f8977e49d1fa session null
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.350Z INITIAL_SESSION callback id 42e1d402-5112-4c29-9a0f-a42fd994081f session null
+GoTrueClient@0 (2.71.1) 2025-09-05T07:20:01.350Z #_useSession end
+GoTrueClient@1 (2.71.1) 2025-09-05T07:20:01.350Z #_useSession end
+ GET / 200 in 789ms
+🔍 [MIDDLEWARE] {
+  path: '/.well-known/appspecific/com.chrome.devtools.json',
+  hasUser: true,
+  userId: '7f403f29...',
+  userEmail: 'kha***@gmail.com',
+  timestamp: '2025-09-05T07:20:01.678Z'
+}
+ ○ Compiling /favicon.ico ...
+ ✓ Compiled /favicon.ico in 752ms
+ GET /favicon.ico?favicon.0b3bf435.ico 200 in 1200ms
+🔍 [MIDDLEWARE] {
+  path: '/',
+  hasUser: true,
+  userId: '7f403f29...',
+  userEmail: 'kha***@gmail.com',
+  timestamp: '2025-09-05T07:21:00.332Z'
+}
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.466Z #_acquireLock begin -1
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.466Z #_acquireLock lock acquired for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.466Z #_handleVisibilityChange()
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.466Z #onAuthStateChange() registered callback with id 7b3e85cf-9e6c-472a-92eb-3a4be136abf8
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.525Z #_initialize() end
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.527Z #_acquireLock lock released for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.527Z #_acquireLock end
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.527Z #_acquireLock begin -1
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.527Z #_acquireLock lock acquired for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.527Z #_useSession begin
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.527Z #__loadSession() begin
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.527Z #_acquireLock lock released for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.527Z #getSession() session from storage null
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.527Z #__loadSession() end
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.527Z #_acquireLock end
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.527Z INITIAL_SESSION callback id 7b3e85cf-9e6c-472a-92eb-3a4be136abf8 session null
+GoTrueClient@2 (2.71.1) 2025-09-05T07:21:00.527Z #_useSession end
+ GET / 200 in 410ms
+🔍 [MIDDLEWARE] {
+  path: '/.well-known/appspecific/com.chrome.devtools.json',
+  hasUser: true,
+  userId: '7f403f29...',
+  userEmail: 'kha***@gmail.com',
+  timestamp: '2025-09-05T07:21:01.104Z'
+}
+ GET /favicon.ico?favicon.0b3bf435.ico 200 in 444ms
+🔍 [MIDDLEWARE] {
+  path: '/',
+  hasUser: true,
+  userId: '7f403f29...',
+  userEmail: 'kha***@gmail.com',
+  timestamp: '2025-09-05T07:21:03.380Z'
+}
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.493Z #_acquireLock begin -1
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.493Z #_acquireLock lock acquired for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.493Z #_handleVisibilityChange()
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.493Z #onAuthStateChange() registered callback with id 93efd011-9cf9-4c27-8b75-3be389005423
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.532Z #_initialize() end
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.533Z #_acquireLock lock released for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.534Z #_acquireLock end
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.534Z #_acquireLock begin -1
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.534Z #_acquireLock lock acquired for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.534Z #_useSession begin
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.534Z #__loadSession() begin
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.534Z #_acquireLock lock released for storage key sb-dhiznegwoezqmdoutjss-auth-token
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.534Z #getSession() session from storage null
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.534Z #__loadSession() end
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.534Z #_acquireLock end
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.534Z INITIAL_SESSION callback id 93efd011-9cf9-4c27-8b75-3be389005423 session null
+GoTrueClient@3 (2.71.1) 2025-09-05T07:21:03.534Z #_useSession end
+ GET / 200 in 228ms
+🔍 [MIDDLEWARE] {
+  path: '/.well-known/appspecific/com.chrome.devtools.json',
+  hasUser: true,
+  userId: '7f403f29...',
+  userEmail: 'kha***@gmail.com',
+  timestamp: '2025-09-05T07:21:03.727Z'
+}
+ GET /favicon.ico?favicon.0b3bf435.ico 200 in 642ms

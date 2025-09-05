@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '../../../../src/utils/supabase/server'
+import { promptService } from '../../../../src/lib/database'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -53,6 +54,8 @@ export async function POST(req: NextRequest) {
     
     // Handle conversationId - get conversation data
     if (conversationId) {
+      console.log('🔍 [generate-prompt] Fetching conversation:', { conversationId, userId: user.id })
+      
       const { data: conversationData, error: conversationError } = await supabase
         .from('conversations')
         .select('*')
@@ -60,12 +63,45 @@ export async function POST(req: NextRequest) {
         .eq('user_id', user.id)
         .single()
       
-      if (conversationError || !conversationData) {
+      if (conversationError) {
+        console.error('🚨 [generate-prompt] Conversation fetch error:', {
+          conversationId,
+          userId: user.id,
+          error: JSON.stringify(conversationError, null, 2),
+          message: conversationError.message,
+          details: conversationError.details,
+          hint: conversationError.hint,
+          code: conversationError.code,
+          name: conversationError.name
+        })
+        
+        // Check if it's a connection or table issue
+        if (conversationError.code === 'PGRST116' || conversationError.message?.includes('relation') || conversationError.message?.includes('table')) {
+          return NextResponse.json(
+            { error: 'Database table not found - conversations table may not exist' },
+            { status: 500 }
+          )
+        }
+        
+        return NextResponse.json(
+          { error: `Conversation not found: ${conversationError.message || 'Database error'}` },
+          { status: 404 }
+        )
+      }
+      
+      if (!conversationData) {
+        console.error('🚨 [generate-prompt] No conversation data returned')
         return NextResponse.json(
           { error: 'Conversation not found' },
           { status: 404 }
         )
       }
+      
+      console.log('✅ [generate-prompt] Conversation found:', {
+        id: conversationData.id,
+        title: conversationData.title,
+        messageCount: conversationData.messages?.length || 0
+      })
       
       // Use messages from the conversation's messages field (JSONB)
       conversationHistory = conversationData.messages || []
@@ -129,7 +165,7 @@ export async function POST(req: NextRequest) {
 
     // Generate the final prompt using available model
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4.1-mini',
       messages: [
         { role: 'system', content: PROMPT_GENERATOR_SYSTEM },
         { 
@@ -150,24 +186,35 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Update the conversation with the final prompt
+    // Save the generated prompt to the prompts table
     if (conversationId) {
-      // Update conversations table
-      const { error: updateError } = await supabase
-        .from('conversations')
-        .update({
-          stage: 'completed',
-          is_complete: true,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', conversationId)
-        .eq('user_id', user.id)
+      try {
+        // Create the prompt entry
+        await promptService.create(
+          conversationId,
+          user.id,
+          generatedPrompt,
+          true, // is_final = true for generated prompts
+          'Generated Prompt'
+        )
+        
+        // Update conversation to store the generated prompt
+        const { error: updateError } = await supabase
+          .from('conversations')
+          .update({
+            generated_prompt: generatedPrompt,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', conversationId)
+          .eq('user_id', user.id)
 
-      if (updateError) {
-        console.error('Error updating conversation:', updateError)
+        if (updateError) {
+          console.error('Error updating conversation has_prompt flag:', updateError)
+        }
+      } catch (promptSaveError) {
+        console.error('Error saving generated prompt:', promptSaveError)
+        // Don't fail the request if prompt saving fails
       }
-      
-      // Note: saved_prompts table doesn't exist, prompt is stored in conversation.generated_prompt
     }
 
     // Increment usage count via the usage API

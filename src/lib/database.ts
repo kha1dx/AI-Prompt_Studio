@@ -362,7 +362,7 @@ export const messageService = {
         content,
         message_index: messageIndex,
         metadata
-      })
+      } as any)
       .select()
       .single()
 
@@ -384,44 +384,59 @@ export const messageService = {
 
 // Prompt operations (using conversations table for generated prompts)
 export const promptService = {
-  // Get prompts by conversation (from generated_prompt field)
+  // Get prompts by conversation using the existing schema
   async getByConversation(conversationId: string) {
     try {
+      console.log('🔍 [promptService] Getting prompts for conversation:', conversationId)
       const supabase = getSupabaseClient()
+      
+      // For now, get all prompts for the user and filter client-side to avoid JSONB query issues
       const { data, error } = await supabase
-        .from('conversations')
-        .select('id, generated_prompt, prompt_generated_at, title, user_id')
-        .eq('id', conversationId)
-        .not('generated_prompt', 'is', null)
-        .maybeSingle() // Use maybeSingle() instead of single() to handle no results
-
-      // If there's a database error (not "no rows found"), throw it
+        .from('prompts')
+        .select('id, optimized_prompt, title, created_at, status, user_id, conversation_history')
+        .order('created_at', { ascending: false })
+        
       if (error) {
-        console.error('Database error in getByConversation:', error)
-        throw error
+        console.error('🚨 [promptService] Error querying prompts:', error)
+        return []
       }
+      
+      // Filter client-side for the specific conversation
+      const filteredData = (data || []).filter((item: any) => {
+        if (!item.conversation_history || !Array.isArray(item.conversation_history)) {
+          return false
+        }
+        return item.conversation_history.some((entry: any) => 
+          entry && entry.conversation_id === conversationId
+        )
+      })
+      
+      console.log('✅ [promptService] Found', filteredData.length, 'prompts for conversation')
       
       // Convert to Prompt format for compatibility
-      if (data && data.generated_prompt) {
-        return [{
-          id: data.id,
-          conversation_id: conversationId,
-          user_id: data.user_id,
-          content: data.generated_prompt,
-          title: data.title,
-          is_final: true,
-          created_at: data.prompt_generated_at || new Date().toISOString(),
-          updated_at: data.prompt_generated_at || new Date().toISOString(),
-          usage_count: 0,
-          tags: []
-        } as Prompt]
-      }
+      const prompts = filteredData.map((item: any) => ({
+        id: item.id,
+        conversation_id: conversationId,
+        user_id: item.user_id,
+        content: item.optimized_prompt,
+        title: item.title,
+        is_final: item.status === 'completed',
+        created_at: item.created_at,
+        updated_at: item.created_at,
+        usage_count: 0,
+        tags: []
+      })) as Prompt[]
       
-      // Return empty array if no prompts found (normal case)
-      return []
+      return prompts
+      
     } catch (error: any) {
-      console.error('Error in promptService.getByConversation:', error)
-      // Return empty array instead of throwing - this is expected for conversations without prompts
+      console.error('🚨 [promptService] Error in getByConversation:', {
+        conversationId,
+        error,
+        message: error?.message,
+        stack: error?.stack,
+        name: error?.name
+      })
       return []
     }
   },
@@ -430,83 +445,100 @@ export const promptService = {
   async getByUser(userId: string, finalOnly: boolean = false) {
     const supabase = getSupabaseClient()
     let query = supabase
-      .from('conversations')
-      .select('id, generated_prompt, prompt_generated_at, title, user_id')
+      .from('prompts')
+      .select('id, optimized_prompt, title, created_at, status, user_id, conversation_history')
       .eq('user_id', userId)
-      .not('generated_prompt', 'is', null)
 
-    const { data, error } = await query.order('prompt_generated_at', { ascending: false })
+    if (finalOnly) {
+      query = query.eq('status', 'completed')
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false })
 
     if (error) throw error
     
-    // Convert to Prompt format
-    return (data || []).map(item => ({
+    // Convert to Prompt format for compatibility
+    const prompts = (data || []).map((item: any) => ({
       id: item.id,
-      conversation_id: item.id,
+      conversation_id: item.conversation_history?.[0]?.conversation_id || null,
       user_id: item.user_id,
-      content: item.generated_prompt!,
+      content: item.optimized_prompt,
       title: item.title,
-      is_final: true,
-      created_at: item.prompt_generated_at || new Date().toISOString(),
-      updated_at: item.prompt_generated_at || new Date().toISOString(),
+      is_final: item.status === 'completed',
+      created_at: item.created_at,
+      updated_at: item.created_at,
       usage_count: 0,
       tags: []
     })) as Prompt[]
+    
+    return prompts
   },
 
-  // Create a new prompt (save as generated_prompt in conversations)
+  // Create a new prompt in the prompts table
   async create(conversationId: string, userId: string, content: string, isFinal: boolean = false, title?: string) {
     const supabase = getSupabaseClient()
     
-    // Update the conversation with the generated prompt
+    // Insert into the prompts table using the existing schema
     const { data, error } = await supabase
-      .from('conversations')
-      .update({
-        generated_prompt: content,
-        prompt_generated_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', conversationId)
-      .eq('user_id', userId)
+      .from('prompts')
+      .insert({
+        user_id: userId,
+        title: title || 'Generated Prompt',
+        original_prompt: '', // Store conversation history here
+        optimized_prompt: content, // Store the generated prompt content here
+        conversation_history: [{ conversation_id: conversationId }], // Store conversation ID in history
+        status: isFinal ? 'completed' : 'draft', // Map is_final to status
+        model_type: 'gpt-4o-mini',
+        use_case: 'Generated from conversation',
+        tags: [],
+        is_public: false
+      } as any)
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('🚨 [promptService] Error creating prompt:', error)
+      throw error
+    }
+    
+    console.log('✅ [promptService] Created prompt successfully:', data.id)
     
     // Return in Prompt format for compatibility
     return {
-      id: data.id,
+      id: (data as any).id,
       conversation_id: conversationId,
       user_id: userId,
-      content,
-      title: title || data.title,
+      content: (data as any).optimized_prompt,
+      title: (data as any).title,
       is_final: isFinal,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+      created_at: (data as any).created_at,
+      updated_at: (data as any).updated_at,
       usage_count: 0,
-      tags: []
+      tags: (data as any).tags || []
     } as Prompt
   },
 
-  // Update prompt
+  // Update prompt in prompts table
   async update(id: string, userId: string, updates: Partial<Prompt>) {
     const supabase = getSupabaseClient()
     
-    // Update the conversation's generated_prompt
     const updateData: any = {
       updated_at: new Date().toISOString()
     }
     
     if (updates.content) {
-      updateData.generated_prompt = updates.content
+      updateData.optimized_prompt = updates.content
     }
     if (updates.title) {
       updateData.title = updates.title
     }
+    if (updates.is_final !== undefined) {
+      updateData.status = updates.is_final ? 'completed' : 'draft'
+    }
     
     const { data, error } = await supabase
-      .from('conversations')
-      .update(updateData)
+      .from('prompts')
+      .update(updateData as any)
       .eq('id', id)
       .eq('user_id', userId)
       .select()
@@ -514,34 +546,33 @@ export const promptService = {
 
     if (error) throw error
     
+    // Convert back to Prompt format
     return {
-      id: data.id,
-      conversation_id: id,
-      user_id: userId,
-      content: data.generated_prompt!,
-      title: data.title,
-      is_final: true,
-      created_at: data.prompt_generated_at || new Date().toISOString(),
-      updated_at: data.updated_at,
+      id: (data as any).id,
+      conversation_id: (data as any).conversation_history?.[0]?.conversation_id || null,
+      user_id: (data as any).user_id,
+      content: (data as any).optimized_prompt,
+      title: (data as any).title,
+      is_final: (data as any).status === 'completed',
+      created_at: (data as any).created_at,
+      updated_at: (data as any).updated_at,
       usage_count: 0,
-      tags: []
+      tags: (data as any).tags || []
     } as Prompt
   },
 
-  // Delete prompt
+  // Delete prompt from prompts table
   async delete(id: string, userId: string) {
     const supabase = getSupabaseClient()
+    
     const { error } = await supabase
-      .from('conversations')
-      .update({
-        generated_prompt: null,
-        prompt_generated_at: null,
-        updated_at: new Date().toISOString()
-      })
+      .from('prompts')
+      .delete()
       .eq('id', id)
       .eq('user_id', userId)
 
     if (error) throw error
+    return true
   },
 
   // Increment usage count (not applicable with current schema)

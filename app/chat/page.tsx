@@ -62,9 +62,14 @@ function ChatPageContent() {
   }, [])
 
   const handleGeneratePrompt = useCallback(async () => {
-    if (!currentConversationId) return
+    if (!currentConversationId) {
+      console.error('🚨 [chat] No conversation ID available for prompt generation')
+      return
+    }
 
     try {
+      console.log('🔍 [chat] Generating prompt for conversation:', currentConversationId)
+      
       // Generate prompt via API
       const response = await fetch('/api/ai/generate-prompt', {
         method: 'POST',
@@ -76,19 +81,31 @@ function ChatPageContent() {
         })
       })
 
+      console.log('🔍 [chat] Generate prompt response:', { 
+        status: response.status, 
+        ok: response.ok,
+        statusText: response.statusText 
+      })
+
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to generate prompt')
+        const errorData = await response.json()
+        console.error('🚨 [chat] Generate prompt error:', errorData)
+        throw new Error(errorData.error || `Failed to generate prompt (${response.status})`)
       }
 
       const result = await response.json()
+      console.log('✅ [chat] Prompt generated successfully')
       setGeneratedPrompt(result.prompt)
       
       // Refresh sidebar to show updated conversation status
       setSidebarKey(prev => prev + 1)
       
     } catch (error: any) {
-      console.error('Failed to generate prompt:', error)
+      console.error('🚨 [chat] Failed to generate prompt:', {
+        error: error.message,
+        conversationId: currentConversationId,
+        stack: error.stack
+      })
       // Handle error appropriately
     }
   }, [currentConversationId])
