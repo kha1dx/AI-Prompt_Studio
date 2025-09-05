@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '../../../../src/utils/supabase/server'
 import { promptService } from '../../../../src/lib/database'
+import { checkUsage, incrementUsage } from '../../../../src/lib/usage'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -123,28 +124,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Check usage limits using new usage tracking system
-    const { data: authSession } = await supabase.auth.getSession()
-    
-    // Check usage via the usage API - use proper URL detection for production
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3003'
-    
-    const usageResponse = await fetch(`${baseUrl}/api/usage`, {
-      headers: {
-        'Authorization': `Bearer ${authSession?.session?.access_token}`,
-      },
-    })
-
-    if (!usageResponse.ok) {
+    // Check usage limits using direct function call (avoiding HTTP request issues in Vercel)
+    let usageData
+    try {
+      usageData = await checkUsage(supabase, user.id)
+    } catch (error: any) {
       return NextResponse.json(
-        { error: 'Failed to check usage limits' },
+        { error: `Failed to check usage limits: ${error.message}` },
         { status: 500 }
       )
     }
-
-    const usageData = await usageResponse.json()
     
     if (!usageData.can_generate) {
       return NextResponse.json(
@@ -222,19 +211,13 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Increment usage count via the usage API
-    const incrementResponse = await fetch(`${baseUrl}/api/usage`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${authSession?.session?.access_token}`,
-      },
-    })
-
+    // Increment usage count using direct function call
     let updatedUsageData = usageData
-    if (incrementResponse.ok) {
-      updatedUsageData = await incrementResponse.json()
-    } else {
-      console.error('Failed to increment usage counter')
+    try {
+      updatedUsageData = await incrementUsage(supabase, user.id)
+    } catch (error: any) {
+      console.error('Failed to increment usage counter:', error.message)
+      // Don't fail the request if usage increment fails, use original data
     }
 
     return NextResponse.json({
