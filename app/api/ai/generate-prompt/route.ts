@@ -88,26 +88,34 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Check usage limits using profiles table
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('subscription_tier, credits_used, credits_limit')
-      .eq('id', user.id)
-      .single()
+    // Check usage limits using new usage tracking system
+    const { data: session } = await supabase.auth.getSession()
+    
+    // Check usage via the usage API
+    const usageResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/usage`, {
+      headers: {
+        'Authorization': `Bearer ${session?.session?.access_token}`,
+      },
+    })
 
-    const tier = profile?.subscription_tier || 'free'
-    const limits = {
-      free: 5,
-      pro: 100,
-      enterprise: -1 // unlimited
+    if (!usageResponse.ok) {
+      return NextResponse.json(
+        { error: 'Failed to check usage limits' },
+        { status: 500 }
+      )
     }
 
-    const currentUsage = profile?.credits_used || 0
-    const usageLimit = limits[tier as keyof typeof limits]
+    const usageData = await usageResponse.json()
     
-    if (usageLimit !== -1 && currentUsage >= usageLimit) {
+    if (!usageData.can_generate) {
       return NextResponse.json(
-        { error: 'Monthly usage limit exceeded', limit: usageLimit, currentUsage },
+        { 
+          error: 'Monthly usage limit exceeded',
+          limit: usageData.monthly_limit,
+          currentUsage: usageData.monthly_prompts_used,
+          needs_upgrade: true,
+          current_tier: usageData.subscription_tier
+        },
         { status: 429 }
       )
     }
@@ -163,15 +171,20 @@ export async function POST(req: NextRequest) {
       // Note: saved_prompts table doesn't exist, prompt is stored in conversation.generated_prompt
     }
 
-    // Update usage count in profiles table
-    const newCreditsUsed = (profile?.credits_used || 0) + 1
-    await supabase
-      .from('profiles')
-      .update({
-        credits_used: newCreditsUsed,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', user.id)
+    // Increment usage count via the usage API
+    const incrementResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/usage`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session?.session?.access_token}`,
+      },
+    })
+
+    let updatedUsageData = usageData
+    if (incrementResponse.ok) {
+      updatedUsageData = await incrementResponse.json()
+    } else {
+      console.error('Failed to increment usage counter')
+    }
 
     return NextResponse.json({
       success: true,
@@ -179,8 +192,9 @@ export async function POST(req: NextRequest) {
       sessionId: sessionId || conversationId,
       conversationId: conversationId,
       usageStatus: {
-        used: newCreditsUsed,
-        limit: usageLimit
+        used: updatedUsageData.monthly_prompts_used || usageData.monthly_prompts_used + 1,
+        limit: usageData.monthly_limit,
+        remaining: updatedUsageData.prompts_remaining || Math.max(0, usageData.monthly_limit - usageData.monthly_prompts_used - 1)
       }
     })
 

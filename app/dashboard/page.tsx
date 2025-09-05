@@ -14,10 +14,14 @@ import {
   Search,
   Filter,
   Calendar,
-  BarChart3
+  BarChart3,
+  CreditCard,
+  ArrowUpCircle
 } from 'lucide-react'
 import Navbar from '../../src/components/navigation/Navbar'
 import { useAuth } from '../../src/contexts/AuthContext'
+import UsageIndicator from '../../components/UsageIndicator'
+import { useSubscription } from '../../hooks/useSubscription'
 
 interface ConversationPreview {
   id: string
@@ -31,6 +35,7 @@ interface ConversationPreview {
 
 export default function Dashboard() {
   const { user } = useAuth()
+  const { subscriptionData, getUsagePercentage, getRemainingPrompts } = useSubscription()
   const [conversations, setConversations] = useState<ConversationPreview[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -113,13 +118,28 @@ export default function Dashboard() {
               </p>
             </div>
             
-            <Link
-              href="/chat"
-              className="btn-primary group"
-            >
-              <Plus className="w-5 h-5 mr-2" />
-              New Conversation
-            </Link>
+            <div className="flex items-center space-x-3">
+              <Link
+                href="/billing"
+                className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors"
+              >
+                <CreditCard className="w-4 h-4 mr-2" />
+                Billing
+              </Link>
+              
+              <Link
+                href="/chat"
+                className="btn-primary group"
+              >
+                <Plus className="w-5 h-5 mr-2" />
+                New Conversation
+              </Link>
+            </div>
+          </div>
+          
+          {/* Usage Indicator */}
+          <div className="mb-6 animate-fade-in-down animate-delay-100">
+            <UsageIndicator />
           </div>
           
           {/* Quick Stats */}
@@ -152,13 +172,28 @@ export default function Dashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">This Month</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">3/5</p>
-                  <p className="text-xs text-gray-500">Free Plan</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                    {subscriptionData ? `${subscriptionData.monthly_prompts_used}/${subscriptionData.monthly_limit === 999999 ? '∞' : subscriptionData.monthly_limit}` : '0/5'}
+                  </p>
+                  <p className="text-xs text-gray-500 capitalize">
+                    {subscriptionData?.subscription_tier || 'Free'} Plan
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-yellow-600" />
                 </div>
               </div>
+              {subscriptionData && subscriptionData.subscription_tier === 'free' && (
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <Link
+                    href="/billing"
+                    className="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                  >
+                    <ArrowUpCircle className="w-4 h-4 mr-1" />
+                    Upgrade Plan
+                  </Link>
+                </div>
+              )}
             </div>
             
             <div className="card">
