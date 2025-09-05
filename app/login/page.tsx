@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '../../src/contexts/AuthContext'
 import { AuthLayout } from '../../src/components/auth/AuthLayout'
 import { AuthForm } from '../../src/components/auth/AuthForm'
 import { GoogleAuthButton } from '../../src/components/auth/GoogleAuthButton'
 
-export default function LoginPage() {
+function LoginContent() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { signIn, signInWithGoogle } = useAuth()
@@ -109,5 +109,20 @@ export default function LoginPage() {
         onGoogleSignIn={handleGoogleLogin}
       />
     </AuthLayout>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   )
 }

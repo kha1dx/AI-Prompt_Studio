@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import { createClient } from '../../../../src/utils/supabase/server'
-import { cookies } from 'next/headers'
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -49,7 +48,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Try to get conversation data (skip non-existent prompt_sessions table)
-    let session = null
+    let conversationSession: any = null
     let conversationHistory: any[] = []
     
     // Handle conversationId - get conversation data
@@ -72,7 +71,7 @@ export async function POST(req: NextRequest) {
       conversationHistory = conversationData.messages || []
       
       // Create a session-like object for compatibility
-      session = {
+      conversationSession = {
         id: conversationData.id,
         user_id: conversationData.user_id,
         title: conversationData.title,
@@ -81,7 +80,7 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    if (!session) {
+    if (!conversationSession) {
       return NextResponse.json(
         { error: 'Session or conversation not found' },
         { status: 404 }
@@ -89,12 +88,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Check usage limits using new usage tracking system
-    const { data: session } = await supabase.auth.getSession()
+    const { data: authSession } = await supabase.auth.getSession()
     
     // Check usage via the usage API
     const usageResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/usage`, {
       headers: {
-        'Authorization': `Bearer ${session?.session?.access_token}`,
+        'Authorization': `Bearer ${authSession?.session?.access_token}`,
       },
     })
 
@@ -130,7 +129,7 @@ export async function POST(req: NextRequest) {
 
     // Generate the final prompt using available model
     const response = await openai.chat.completions.create({
-      model: 'gpt-4.1-mini',
+      model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: PROMPT_GENERATOR_SYSTEM },
         { 
@@ -175,7 +174,7 @@ export async function POST(req: NextRequest) {
     const incrementResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/usage`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${session?.session?.access_token}`,
+        'Authorization': `Bearer ${authSession?.session?.access_token}`,
       },
     })
 

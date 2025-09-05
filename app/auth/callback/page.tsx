@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '../../../src/lib/supabase/client'
 
-export default function QuickFixCallbackPage() {
+function CallbackContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const processedRef = useRef(false)
@@ -111,5 +111,25 @@ export default function QuickFixCallbackPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function QuickFixCallbackPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <div className="text-center">
+            <div className="text-blue-500 text-4xl mb-4">🔄</div>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              Loading...
+            </h1>
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          </div>
+        </div>
+      </div>
+    }>
+      <CallbackContent />
+    </Suspense>
   )
 }

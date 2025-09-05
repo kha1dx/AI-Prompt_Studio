@@ -222,12 +222,12 @@ export default function StreamingChatInterface({
   }
 
   return (
-    <div className=\"flex flex-col h-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg\">
+    <div className="flex flex-col h-full max-w-4xl mx-auto bg-white rounded-lg shadow-lg">
       {/* Header */}
-      <div className=\"flex items-center justify-between p-4 border-b\">
+      <div className="flex items-center justify-between p-4 border-b">
         <div>
-          <h2 className=\"text-xl font-semibold text-gray-800\">AI Prompt Assistant</h2>
-          <p className=\"text-sm text-gray-600\">Let's create the perfect prompt together</p>
+          <h2 className="text-xl font-semibold text-gray-800">AI Prompt Assistant</h2>
+          <p className="text-sm text-gray-600">Let's create the perfect prompt together</p>
         </div>
         
         <div className=\"flex items-center space-x-2\">

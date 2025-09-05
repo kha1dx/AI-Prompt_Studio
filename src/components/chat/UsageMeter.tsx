@@ -41,10 +41,10 @@ export default function UsageMeter({ used, limit, tier, className = '' }: UsageM
 
   return (
     <div className={`bg-white rounded-lg shadow-sm border p-4 ${className}`}>
-      <div className=\"flex items-center justify-between mb-3\">
-        <div className=\"flex items-center space-x-2\">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center space-x-2">
           <div className={`w-2 h-2 rounded-full ${tierInfo.color}`} />
-          <span className=\"text-sm font-medium text-gray-700\">{tierInfo.name} Plan</span>
+          <span className="text-sm font-medium text-gray-700">{tierInfo.name} Plan</span>
         </div>
         <div className=\"text-sm text-gray-600\">
           {limit === -1 ? (

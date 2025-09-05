@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { Brain, Sparkles } from 'lucide-react'
 import type { TypingIndicatorProps } from '../../types/chat'
 
 export function TypingIndicator({ isVisible }: TypingIndicatorProps) {
