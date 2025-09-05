@@ -126,8 +126,12 @@ export async function POST(req: NextRequest) {
     // Check usage limits using new usage tracking system
     const { data: authSession } = await supabase.auth.getSession()
     
-    // Check usage via the usage API
-    const usageResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/usage`, {
+    // Check usage via the usage API - use proper URL detection for production
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3003'
+    
+    const usageResponse = await fetch(`${baseUrl}/api/usage`, {
       headers: {
         'Authorization': `Bearer ${authSession?.session?.access_token}`,
       },
@@ -189,13 +193,14 @@ export async function POST(req: NextRequest) {
     // Save the generated prompt to the prompts table
     if (conversationId) {
       try {
-        // Create the prompt entry
+        // Create the prompt entry with authenticated supabase client
         await promptService.create(
           conversationId,
           user.id,
           generatedPrompt,
           true, // is_final = true for generated prompts
-          'Generated Prompt'
+          'Generated Prompt',
+          supabase // Pass the authenticated supabase client
         )
         
         // Update conversation to store the generated prompt
@@ -218,7 +223,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Increment usage count via the usage API
-    const incrementResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/usage`, {
+    const incrementResponse = await fetch(`${baseUrl}/api/usage`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${authSession?.session?.access_token}`,

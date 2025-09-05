@@ -475,8 +475,8 @@ export const promptService = {
   },
 
   // Create a new prompt in the prompts table
-  async create(conversationId: string, userId: string, content: string, isFinal: boolean = false, title?: string) {
-    const supabase = getSupabaseClient()
+  async create(conversationId: string, userId: string, content: string, isFinal: boolean = false, title?: string, supabaseClient?: any) {
+    const supabase = supabaseClient || getSupabaseClient()
     
     // Insert into the prompts table using the existing schema
     const { data, error } = await supabase
