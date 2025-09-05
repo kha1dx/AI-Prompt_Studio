@@ -1,11 +1,11 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { Brain, Sparkles } from 'lucide-react'
-import type { TypingIndicatorProps } from '../../types/chat'
+import React from "react";
+import { Brain, Sparkles } from "lucide-react";
+import type { TypingIndicatorProps } from "../../types/chat";
 
 export function TypingIndicator({ isVisible }: TypingIndicatorProps) {
-  if (!isVisible) return null
+  if (!isVisible) return null;
 
   return (
     <div className="flex items-center space-x-3 p-4 glass-morphism rounded-2xl animate-fade-in-up border border-white/10">
@@ -17,7 +17,9 @@ export function TypingIndicator({ isVisible }: TypingIndicatorProps) {
       <div className="flex-1">
         <div className="flex items-center space-x-2 mb-2">
           <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
-          <p className="text-sm text-white font-medium">AI is crafting your response...</p>
+          <p className="text-sm text-white font-medium">
+            AI is crafting your response...
+          </p>
         </div>
         <div className="typing-dots">
           <span></span>
@@ -26,5 +28,5 @@ export function TypingIndicator({ isVisible }: TypingIndicatorProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }
