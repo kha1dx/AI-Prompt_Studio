@@ -16,6 +16,7 @@ function ChatPageContent() {
   const [generatedPrompt, setGeneratedPrompt] = useState<string>('')
   const [sidebarKey, setSidebarKey] = useState(0) // Force sidebar refresh
   const [templateText, setTemplateText] = useState<string>('')
+  const [isGenerating, setIsGenerating] = useState<boolean>(false)
 
   // All hooks must be called before any conditional returns
   const handleNewConversation = useCallback(() => {
@@ -68,6 +69,7 @@ function ChatPageContent() {
     }
 
     try {
+      setIsGenerating(true) // Start loading
       console.log('🔍 [chat] Generating prompt for conversation:', currentConversationId)
       
       // Generate prompt via API
@@ -107,6 +109,8 @@ function ChatPageContent() {
         stack: error.stack
       })
       // Handle error appropriately
+    } finally {
+      setIsGenerating(false) // Stop loading
     }
   }, [currentConversationId])
 
@@ -221,7 +225,7 @@ function ChatPageContent() {
               generatedPrompt={generatedPrompt}
               onGeneratePrompt={handleGeneratePrompt}
               canGeneratePrompt={!!currentConversationId}
-              isGenerating={false}
+              isGenerating={isGenerating}
               onTemplateSelect={handleTemplateSelect}
             />
           </ErrorBoundary>
